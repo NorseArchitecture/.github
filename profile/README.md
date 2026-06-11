@@ -1,0 +1,61 @@
+# Norse Architecture for .NET
+
+**A fully composable, service-oriented architecture for the .NET space — opinionated where it counts, sovereign where it matters, and enforced by the compiler instead of the code review.**
+
+---
+
+## The pitch
+
+Every .NET shop rebuilds the same platform, every time. Hosting, persistence, messaging, auth, validation, observability — the undifferentiated heavy lifting gets re-decided, re-implemented, and re-broken for every new service. The architecture lives in a wiki diagram that drifted from the code two sprints in, and the rules that matter are enforced by whoever happens to be reviewing the pull request that day.
+
+Norse Architecture inverts that. The architecture *is* the substrate: a small set of repositories that declare the contracts, forge the primitives, implement the infrastructure, provide the host chassis, and orchestrate the whole. Your services conform to the contracts and ride the rails. Everything below your domain is decided once, enforced at build time, and done — so the only code you write is the code only you can write.
+
+## Mythology markets. Functions operate. Docs explain.
+
+The repositories are named for the Norse cosmos. The projects and namespaces inside them are named for exactly what they do. Open the organization and you tour the realms; open the solution and every project tells you its function before you read a line of it.
+
+| Repository | The lore | The function |
+|---|---|---|
+| **[Asgard](https://github.com/NorseArchitecture/Asgard)** | Realm of the Æsir, whose laws bind gods and mortals alike | `Norse.Abstractions.*` — the contracts, marker types, and laws every realm must honor |
+| **[Svartalfheim](https://github.com/NorseArchitecture/Svartalfheim)** | The dwarven forge where Mjölnir and Gleipnir were made | `Norse.Primitives.*` — domain value types, identifiers, result parsing, encryption: the unbreakable artifacts every realm carries |
+| **[Midgard](https://github.com/NorseArchitecture/Midgard)** | Realm of mortals, where the law is lived | `Norse.Infrastructure.*` — concrete implementations of Asgard's contracts: persistence, messaging, caching, external integrations |
+| **[Yggdrasil](https://github.com/NorseArchitecture/Yggdrasil)** | The World Tree that binds the nine realms | `Norse.Hosting.*` — the web, worker, and migration service chassis every realm runs on |
+| **[Bifrost](https://github.com/NorseArchitecture/Bifrost)** | The rainbow bridge between the realms, watched over by Heimdall | `Norse.Orchestration.*` — the .NET Aspire composition layer that connects services, databases, queues, and configuration into one running platform |
+
+This split is deliberate, and it is the cure for the oldest disease in software: **names that drift**. A namespace is operational truth — the compiler enforces it, so it cannot rot. A myth is a story — stories don't need refactoring. The hype lives at the front door; the function lives in the code; the docs connect the two. Three jobs, never crossed.
+
+## Composable means composable
+
+The substrate stacks in one direction, and your code sits on top of all of it:
+
+1. **Asgard declares the law** — contracts and abstractions, with no implementations to leak.
+2. **Svartalfheim forges the artifacts** — primitives hardened below the domain, so they compose any domain you define above them.
+3. **Midgard does the work** — the law, implemented: every infrastructure decision made once, correctly.
+4. **Yggdrasil carries the load** — a hardened chassis for web, worker, and migration services, so a new service starts at "write your domain," not "configure your host."
+5. **Bifrost bridges it together** — one orchestration layer composing every resource, from first `dotnet run` on a laptop to deployment.
+
+Your services live under your own root — `{Company}.{Context}.*` — and the platform neither knows nor cares what you build there. Conform to `Norse.Abstractions`, ride the rails, and your domain is sovereign: your namespaces, your models, your business.
+
+**The proof is Billing.** Picture three companies on the substrate — an insurance MGA, an energy retailer, a logistics operation — each with a context named Billing. Insurance Billing accretes earned premium day after day on risk. Energy Billing coordinates four distinct utility-billing models. Logistics Billing invoices orders flowing in from across the globe. Same name, three completely different animals, **zero shared code** between them — and the platform hosts all three identically. That gap isn't a limitation. That gap *is* the design.
+
+## Opinions, enforced
+
+Norse Architecture is built around the **pit of success**: the easy path and the correct path are the same path, and the wrong path doesn't compile.
+
+- **Compile-time over runtime.** Source generators and Roslyn analyzers over reflection and convention-scanning. If the architecture has a rule, the build enforces it — not the reviewer, not the wiki, not tribal memory.
+- **Fail loudly.** No silent fallbacks, no default-swallowed errors. If it can fail, it fails immediately and visibly.
+- **Smart about one thing.** Every component is the expert and source of truth for exactly one subject, and deliberately dumb about everything else.
+- **Warnings are errors.** Ratcheted at build time, everywhere, on purpose.
+- **Naming is a deliberate act.** Names describe the role, never the mechanism — and the structure above exists so that no load-bearing name can ever drift.
+
+## The crooked path
+
+Most architectures show you the cathedral and hide the scaffolding accidents. We publish ours. Every reversal, wrong turn, and bad call made designing this platform is recorded and shipped alongside the result — what was believed, why it was wrong, how it surfaced, and what it taught. The clean architecture is the verdict; the crooked path is the trial. An architecture that claims it's better to be *wrong cheaply and visibly* than *wrong expensively and silently* has to hold itself to that standard first.
+
+## Status
+
+Norse Architecture is built spec-first: designs are argued, reconciled, and judged before code renders the verdict. The realms above are landing now, in dependency order — laws before implementations, implementations before hosts. Watch the repositories, read the lore, and check back as the cosmos fills in.
+
+---
+
+*Built on modern .NET. Forged for everything after.*
