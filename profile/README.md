@@ -18,9 +18,11 @@ The repositories are named for the Norse cosmos. The projects and namespaces ins
 |---|---|---|
 | **[Asgard](https://github.com/NorseArchitecture/Asgard)** | Realm of the Æsir, whose laws bind gods and mortals alike | `Norse.Abstractions.*` — the contracts, marker types, and laws every realm must honor |
 | **[Svartalfheim](https://github.com/NorseArchitecture/Svartalfheim)** | The dwarven forge where Mjölnir and Gleipnir were made | `Norse.Primitives.*` — domain value types, identifiers, result parsing, encryption: the unbreakable artifacts every realm carries |
+| **[Urdarbrunnr](https://github.com/NorseArchitecture/Urdarbrunnr)** | The Well of Urd at Yggdrasil's roots, where the Norns draw water to sustain the tree and carve fate into its trunk as runes | `Norse.EntityFramework.*` — entity base types, DbContext foundations, conventions, value converters, and the migrations chassis: the record of all that has become |
 | **[Midgard](https://github.com/NorseArchitecture/Midgard)** | Realm of mortals, where the law is lived | `Norse.Infrastructure.*` — concrete implementations of Asgard's contracts: persistence, messaging, caching, external integrations |
 | **[Yggdrasil](https://github.com/NorseArchitecture/Yggdrasil)** | The World Tree that binds the nine realms | `Norse.Hosting.*` — the web, worker, and migration service chassis every realm runs on |
 | **[Bifrost](https://github.com/NorseArchitecture/Bifrost)** | The rainbow bridge between the realms, watched over by Heimdall | `Norse.Orchestration.*` — the .NET Aspire composition layer that connects services, databases, queues, and configuration into one running platform |
+| **[Glitnir](https://github.com/NorseArchitecture/Glitnir)** | The shining hall of judgment — gold pillars, silver roof — where every suit is settled | The design court — specs, plans, and proof-of-concept verdicts: the architecture is argued to convergence here before code renders the verdict |
 
 This split is deliberate, and it is the cure for the oldest disease in software: **names that drift**. A namespace is operational truth — the compiler enforces it, so it cannot rot. A myth is a story — stories don't need refactoring. The hype lives at the front door; the function lives in the code; the docs connect the two. Three jobs, never crossed.
 
@@ -30,9 +32,10 @@ The substrate stacks in one direction, and your code sits on top of all of it:
 
 1. **Asgard declares the law** — contracts and abstractions, with no implementations to leak.
 2. **Svartalfheim forges the artifacts** — primitives hardened below the domain, so they compose any domain you define above them.
-3. **Midgard does the work** — the law, implemented: every infrastructure decision made once, correctly.
-4. **Yggdrasil carries the load** — a hardened chassis for web, worker, and migration services, so a new service starts at "write your domain," not "configure your host."
-5. **Bifrost bridges it together** — one orchestration layer composing every resource, from first `dotnet run` on a laptop to deployment.
+3. **Urdarbrunnr keeps the record** — the Entity Framework foundation: entity base types, DbContext foundations, conventions, value converters, and the migrations chassis, so persistence starts lawful instead of becoming lawful.
+4. **Midgard does the work** — the law, implemented: every infrastructure decision made once, correctly.
+5. **Yggdrasil carries the load** — a hardened chassis for web, worker, and migration services, so a new service starts at "write your domain," not "configure your host."
+6. **Bifrost bridges it together** — one orchestration layer composing every resource, from first `dotnet run` on a laptop to deployment.
 
 Your services live under your own root — `{Company}.{Context}.*` — and the platform neither knows nor cares what you build there. Conform to `Norse.Abstractions`, ride the rails, and your domain is sovereign: your namespaces, your models, your business.
 
@@ -50,7 +53,7 @@ Norse Architecture is built around the **pit of success**: the easy path and the
 
 ## The crooked path
 
-Most architectures show you the cathedral and hide the scaffolding accidents. We publish ours. Every reversal, wrong turn, and bad call made designing this platform is recorded and shipped alongside the result — what was believed, why it was wrong, how it surfaced, and what it taught. The clean architecture is the verdict; the crooked path is the trial. An architecture that claims it's better to be *wrong cheaply and visibly* than *wrong expensively and silently* has to hold itself to that standard first.
+Most architectures show you the cathedral and hide the scaffolding accidents. We publish ours. Every reversal, wrong turn, and bad call made designing this platform is recorded and shipped alongside the result — what was believed, why it was wrong, how it surfaced, and what it taught. The full ledger is public in [Glitnir](https://github.com/NorseArchitecture/Glitnir), the design court, where every spec is argued to convergence before code renders the verdict. The clean architecture is the verdict; the crooked path is the trial. An architecture that claims it's better to be *wrong cheaply and visibly* than *wrong expensively and silently* has to hold itself to that standard first.
 
 ## Status
 
