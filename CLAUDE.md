@@ -1,0 +1,63 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this repository is
+
+`NorseArchitecture/.github` is the special GitHub org-default repo: it supplies `profile/README.md` (the org's public profile page) and the default community-health files — `CONTRIBUTING.md`, `SECURITY.md`, `SUPPORT.md` — that apply to every repo in the org that doesn't override them. There is no application code here; the only executable is `scripts/carve-the-laws.ps1`, a `gh`-CLI automation script that applies a branch-protection ruleset ("Law of the Aesir") across the org's repos. Treat this repo as docs-plus-automation, not a service.
+
+## Commands
+
+There is no build/lint/test pipeline in this repo (no CI workflows, no `.editorconfig`). The only operational command is the ruleset script:
+
+```powershell
+./scripts/carve-the-laws.ps1            # apply "Law of the Aesir" to every repo in $AllRepos
+./scripts/carve-the-laws.ps1 Asgard     # apply to a single repo
+```
+
+Requires `gh` authenticated with admin on the target repos. It is idempotent (PUT if a same-named ruleset exists, POST otherwise). Verify a change with:
+
+```bash
+gh ruleset list -R NorseArchitecture/<repo>
+```
+
+When adding a newly-born repo to the org, add it to `$AllRepos` in that script (currently: Asgard, Svartalfheim, Midgard, Yggdrasil, Urdarbrunnr, Bifrost, Glitnir, `.github`) — Heimdall/Himinbjorg are not yet listed and should be added when they go live.
+
+## Architecture: the cosmos
+
+`profile/README.md` is the canonical map of the whole organization, not just this repo — read it before touching any Norse Architecture repo. The mapping is strict: **mythology markets, functions operate, docs explain** — repo names are Norse lore, namespaces (`Norse.Abstractions.*`, `Norse.Primitives.*`, etc.) are literal operational truth, and nothing else is allowed to drift between the two.
+
+Dependency order (each layer rides only on the ones above it):
+
+1. **Asgard** — `Norse.Abstractions.*`: contracts only, no implementations.
+2. **Svartalfheim** — `Norse.Primitives.*`: value types, identifiers, result parsing, encryption.
+3. **Urdarbrunnr** — `Norse.EntityFramework.*`: EF Core foundations (entity base types, DbContext, conventions, value converters, migrations chassis).
+4. **Midgard** — `Norse.Infrastructure.*`: concrete implementations of Asgard's contracts (persistence, messaging, caching, external integrations).
+5. **Yggdrasil** — `Norse.Hosting.*`: web/worker/migration service chassis.
+6. **Himinbjorg** — `Norse.Identity.*`: backend-only EF persistence for ASP.NET Identity/OpenIddict — never crosses to WASM or MAUI.
+7. **Heimdall** — `Norse.Access.*`: auth services on top of Himinbjorg, uniform across Blazor Server/WASM/MAUI.
+8. **Bifrost** — `Norse.Orchestration.*`: .NET Aspire composition layer wiring services, databases, queues, config into a running platform.
+9. **Glitnir** — the design court: specs, plans, and proof-of-concept verdicts. Specs are argued to convergence here *before* any of the above renders code.
+
+Consuming services live under their own root (`{Company}.{Context}.*`), conform to `Norse.Abstractions`, and own everything above the substrate — the platform deliberately knows nothing about their domain (see the "three Billing contexts, zero shared code" example in `profile/README.md` for why that gap is the design, not a gap to close).
+
+Org-wide enforced opinions (apply when editing *any* Norse Architecture repo, including this one): compile-time over runtime (analyzers/source generators over reflection), fail loudly with no silent fallbacks, each component smart about exactly one thing, warnings-as-errors, and naming that names the role rather than the mechanism.
+
+## Repo-specific conventions
+
+- `.gitattributes` already normalizes line endings (LF everywhere except `.csv` per RFC 4180 and Windows `.bat`/`.cmd`); don't second-guess it. Note `.github/` itself is `export-ignore`d from archives.
+- `*.Designer.cs`, `*.g.cs`, `*.g.i.cs`, `*ModelSnapshot.cs` are `linguist-generated`. EF migration bodies (`*Migration.cs`) are deliberately **not** marked generated — migration diffs are review surface, not noise to collapse.
+- Markdown in this repo is voiced in-world (Norse lore framing) for `profile/README.md` and this repo's own `README.md`; the community-health files (`CONTRIBUTING.md`, `SECURITY.md`, `SUPPORT.md`) are plain operational tone since they're read by external contributors, not just the org's own engineers. Match the register of the file you're editing.
+- Per-repo `CONTRIBUTING.md`/`SECURITY.md` override these defaults when they exist — don't assume the files here are the last word for any other repo without checking.
+
+## Working in this repo (and across Norse Architecture generally)
+
+This org is built spec-first, plan-second, code-last — `profile/README.md`'s own "Status" and "The crooked path" sections describe Glitnir's design-court process; that is not marketing copy, it is the actual required workflow. The `superpowers` plugin is enabled for this repo specifically so that workflow has teeth instead of being aspirational text:
+
+- Treat **brainstorming** as mandatory before any plan — design questions get argued to convergence (Glitnir's role) before a plan exists.
+- Once a design has converged, use **writing-plans**, then **executing-plans** — don't jump straight from idea to diff.
+- Implementation work proceeds **test-driven** (red/green/refactor), and non-trivial multi-step execution should be delegated via **subagent-driven-development** / **dispatching-parallel-agents** rather than done monolithically inline.
+- Before declaring anything done, run **verification-before-completion**; route real changes through **requesting-code-review** / **receiving-code-review**; close out with **finishing-a-development-branch**.
+- Bugs are the one exception to spec-first: go straight to **systematic-debugging**, no design phase required.
+
+This repo itself has nothing to TDD (no test runner exists), but the script and docs here still go through brainstorm → plan → execute → verify like everything else in the org — and any new automation added here (CI workflows, additional scripts) should arrive with tests from the start rather than retrofitted.
