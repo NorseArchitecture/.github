@@ -42,8 +42,10 @@ if (-not $Repos -or $Repos.Count -eq 0) {
 #   - bypass_actors actor_id 5 = Repository admin role. bypass_mode
 #     "always" lets an admin push directly in an emergency; change to
 #     "pull_request" to allow bypass only through a PR.
-#   - required_status_checks context "build" must exactly match the CI
-#     job/check name reported to GitHub. Adjust when workflows settle.
+#   - required_status_checks context "CI / build / build" was confirmed
+#     empirically 2026-06-25 from Svartalfheim's first PR gate run:
+#     "CI" = caller workflow name, first "build" = caller job id,
+#     second "build" = called job id in ci-build-test.yml.
 #   - deletion + non_fast_forward: nobody deletes or force-pushes the
 #     default branch. Including you. Especially at 2 AM.
 # ---------------------------------------------------------------------------
@@ -82,7 +84,7 @@ $Ruleset = @{
 			parameters = @{
 				strict_required_status_checks_policy = $true
 				required_status_checks = @(
-					@{ context = 'build' }
+					@{ context = 'CI / build / build' }
 				)
 			}
 		}
