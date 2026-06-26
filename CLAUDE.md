@@ -8,7 +8,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-There is no build/lint/test pipeline in this repo (no CI workflows, no `.editorconfig`). The only operational command is the ruleset script:
+There is no build/lint/test pipeline in this repo (no CI workflows, no `.editorconfig`). Operational commands:
+
+### Org secrets
+
+**`BIFROST_TOKEN`** — fine-grained PAT scoped to `NorseArchitecture/Bifrost` with `Contents: write`. Used by the `update-bifrost.yml` reusable workflow so realm pushes to `master` automatically advance Bifrost's submodule pointer. Set (or renew) with:
+
+```bash
+gh secret set BIFROST_TOKEN --org NorseArchitecture --visibility all --body "<token>"
+```
+
+Generate the replacement token at **GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens**: resource owner `NorseArchitecture`, repository `Bifrost`, permission `Contents: write`. Token was first set 2026-06-26 with a 366-day expiry — renewal due ~2027-06-27.
+
+### Branch ruleset
+
+The only other operational command is the ruleset script:
 
 ```powershell
 ./scripts/carve-the-laws.ps1            # apply "Law of the Aesir" to every repo in $AllRepos
