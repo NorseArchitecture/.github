@@ -25,7 +25,7 @@ $Org = 'NorseArchitecture'
 $RulesetName = 'Law of the Aesir'
 
 # The founding realms. Add new repos here as they are born.
-$AllRepos = @('Asgard', 'Svartalfheim', 'Midgard', 'Yggdrasil', 'Urdarbrunnr', 'Bifrost', 'Glitnir', '.github')
+$AllRepos = @('Asgard', 'Svartalfheim', 'Midgard', 'Yggdrasil', 'Urdarbrunnr', 'Ratatoskr', 'Heimdall', 'Himinbjorg', 'Nagalfar', 'Bifrost', 'Glitnir', '.github')
 
 if (-not $Repos -or $Repos.Count -eq 0) {
 	$Repos = $AllRepos
@@ -103,7 +103,8 @@ foreach ($Repo in $Repos) {
 	# Repo settings — idempotent PATCH; safe to run repeatedly.
 	Write-Host '    Applying repo settings...'
 	gh api --method PATCH "repos/$Org/$Repo" `
-		-F delete_branch_on_merge=true | Out-Null
+		-F delete_branch_on_merge=true `
+		-F allow_auto_merge=true | Out-Null
 	if ($LASTEXITCODE -eq 0) {
 		Write-Host '    Repo settings applied.'
 	} else {
