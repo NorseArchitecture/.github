@@ -42,11 +42,11 @@ if (-not $Repos -or $Repos.Count -eq 0) {
 #   - bypass_actors actor_id 5 = Repository admin role. bypass_mode
 #     "always" lets an admin push directly in an emergency; change to
 #     "pull_request" to allow bypass only through a PR.
-#   - required_status_checks context "CI / gate / build (pull_request)" was
-#     confirmed empirically 2026-06-25 from Svartalfheim's PR gate run:
-#     "CI" = caller workflow name, "gate" = caller job id,
-#     "build" = called job id in ci-build-test.yml,
-#     "(pull_request)" = the trigger event GitHub appends to the context.
+#   - required_status_checks context "gate / build" (integration_id 15368)
+#     was confirmed empirically 2026-06-25: GitHub Actions (app 15368) reports
+#     the check as "{caller job} / {called job}" — the workflow name and event
+#     suffix are UI decorations only. Locking to integration_id 15368 prevents
+#     a non-Actions source from satisfying the gate with a spoofed context name.
 #   - deletion + non_fast_forward: nobody deletes or force-pushes the
 #     default branch. Including you. Especially at 2 AM.
 # ---------------------------------------------------------------------------
@@ -85,7 +85,7 @@ $Ruleset = @{
 			parameters = @{
 				strict_required_status_checks_policy = $true
 				required_status_checks = @(
-					@{ context = 'CI / gate / build (pull_request)' }
+					@{ context = 'gate / build'; integration_id = 15368 }
 				)
 			}
 		}
@@ -93,12 +93,24 @@ $Ruleset = @{
 } | ConvertTo-Json -Depth 10
 
 # ---------------------------------------------------------------------------
-# Apply: update if a ruleset of the same name exists, create otherwise.
+# Apply: repo settings, then ruleset.
 # ---------------------------------------------------------------------------
 $Failures = @()
 
 foreach ($Repo in $Repos) {
 	Write-Host "==> $Org/$Repo"
+
+	# Repo settings — idempotent PATCH; safe to run repeatedly.
+	Write-Host '    Applying repo settings...'
+	gh api --method PATCH "repos/$Org/$Repo" `
+		-F delete_branch_on_merge=true | Out-Null
+	if ($LASTEXITCODE -eq 0) {
+		Write-Host '    Repo settings applied.'
+	} else {
+		Write-Error -ErrorAction Continue '    FAILED to apply repo settings.'
+		$Failures += $Repo
+		continue
+	}
 
 	$ExistingId = gh api "repos/$Org/$Repo/rulesets" `
 		--jq ".[] | select(.name == `"$RulesetName`") | .id" 2>$null
