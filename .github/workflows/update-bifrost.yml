@@ -1,0 +1,36 @@
+name: Update Bifrost Submodule
+
+on:
+  workflow_call:
+    secrets:
+      bifrost_token:
+        required: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Bifrost
+        uses: actions/checkout@v7
+        with:
+          repository: NorseArchitecture/Bifrost
+          token: ${{ secrets.bifrost_token }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Stamp submodule pointer
+        env:
+          REALM: ${{ github.event.repository.name }}
+          NEW_SHA: ${{ github.sha }}
+        run: |
+          git update-index --cacheinfo "160000,$NEW_SHA,$REALM"
+          git diff --cached --quiet && exit 0
+          git commit -m "Update $REALM"
+          for attempt in 1 2 3; do
+            git push && break
+            sleep 5
+            git pull --rebase origin master
+          done
