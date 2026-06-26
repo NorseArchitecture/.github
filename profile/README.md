@@ -19,7 +19,8 @@ The repositories are named for the Norse cosmos. The projects and namespaces ins
 | **[Asgard](https://github.com/NorseArchitecture/Asgard)** | Realm of the Æsir, whose laws bind gods and mortals alike | `Norse.Abstractions.*` — the contracts, marker types, and laws every realm must honor |
 | **[Svartalfheim](https://github.com/NorseArchitecture/Svartalfheim)** | The dwarven forge where Mjölnir and Gleipnir were made | `Norse.Primitives.*` — domain value types, identifiers, result parsing, encryption: the unbreakable artifacts every realm carries |
 | **[Urdarbrunnr](https://github.com/NorseArchitecture/Urdarbrunnr)** | The Well of Urd at Yggdrasil's roots, where the Norns draw water to sustain the tree and carve fate into its trunk as runes | `Norse.EntityFramework.*` — entity base types, DbContext foundations, conventions, value converters, and the migrations chassis: the record of all that has become |
-| **[Midgard](https://github.com/NorseArchitecture/Midgard)** | Realm of mortals, where the law is lived | `Norse.Infrastructure.*` — concrete implementations of Asgard's contracts: persistence, messaging, caching, external integrations |
+| **[Ratatoskr](https://github.com/NorseArchitecture/Ratatoskr)** | The sly squirrel that races up and down Yggdrasil, carrying slander and secrets between the eagle at the crown and Níðhöggr at the roots — the original message broker | `Norse.NServiceBus.*` — NServiceBus endpoint configuration, saga infrastructure, message conventions, and transport wiring: Asgard declares the messaging surface; Ratatoskr carries it |
+| **[Midgard](https://github.com/NorseArchitecture/Midgard)** | Realm of mortals, where the law is lived | `Norse.Infrastructure.*` — concrete implementations of Asgard's contracts: persistence, caching, external integrations |
 | **[Yggdrasil](https://github.com/NorseArchitecture/Yggdrasil)** | The World Tree that binds the nine realms | `Norse.Hosting.*` — the web, worker, and migration service chassis every realm runs on |
 | **[Himinbjorg](https://github.com/NorseArchitecture/Himinbjorg)** | Heimdall's hall at the head of Bifrost, where the watchman keeps the record of all who may cross | `Norse.Identity.*` — backend-only EF persistence for ASP.NET Identity and OpenIddict: the record of who is who, sealed server-side, never crossing to WASM or MAUI |
 | **[Heimdall](https://github.com/NorseArchitecture/Heimdall)** | The ever-watchful guardian of Bifrost, keenest of sight and hearing, who alone decides who may cross | `Norse.Access.*` — auth services riding on Himinbjorg: one law of access enforced identically across Blazor Server, WASM, and MAUI, with admin components and the backing gRPC service |
@@ -36,8 +37,9 @@ The substrate stacks in one direction, and your code sits on top of all of it:
 2. **Svartalfheim forges the artifacts** — primitives hardened below the domain, so they compose any domain you define above them.
 3. **Urdarbrunnr keeps the record** — the Entity Framework foundation: entity base types, DbContext foundations, conventions, value converters, and the migrations chassis, so persistence starts lawful instead of becoming lawful.
 4. **Midgard does the work** — the law, implemented: every infrastructure decision made once, correctly.
-5. **Yggdrasil carries the load** — a hardened chassis for web, worker, and migration services, so a new service starts at "write your domain," not "configure your host."
-6. **Bifrost bridges it together** — one orchestration layer composing every resource, from first `dotnet run` on a laptop to deployment.
+5. **Ratatoskr carries the messages** — NServiceBus endpoint configuration, saga infrastructure, and transport wiring, so the Æsir declare the messaging surface and every realm picks its own courier.
+6. **Yggdrasil carries the load** — a hardened chassis for web, worker, and migration services, so a new service starts at "write your domain," not "configure your host."
+7. **Bifrost bridges it together** — one orchestration layer composing every resource, from first `dotnet run` on a laptop to deployment.
 
 Your services live under your own root — `{Company}.{Context}.*` — and the platform neither knows nor cares what you build there. Conform to `Norse.Abstractions`, ride the rails, and your domain is sovereign: your namespaces, your models, your business.
 
