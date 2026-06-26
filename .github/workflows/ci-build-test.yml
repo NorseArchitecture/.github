@@ -26,7 +26,7 @@ jobs:
           dotnet-quality: "preview"
 
       - name: Add Norse NuGet source
-        uses: NorseArchitecture/.github/.github/actions/add-norse-nuget-source@master
+        uses: ./.github/actions/add-norse-nuget-source
 
       - name: Restore
         run: dotnet restore
