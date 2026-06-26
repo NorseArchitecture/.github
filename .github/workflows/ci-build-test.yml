@@ -14,22 +14,8 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: "11.0.x"
-          dotnet-quality: "preview"
-
-      - name: Add Norse NuGet source
-        uses: ./.github/actions/add-norse-nuget-source
-
-      - name: Restore
-        run: dotnet restore
+        uses: NorseArchitecture/.github/.github/actions/setup-dotnet@master
 
       - name: Build
         run: dotnet build --no-restore -c Release
