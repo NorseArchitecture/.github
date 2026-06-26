@@ -1,5 +1,11 @@
 name: NuGet Release
 
+# Setup steps (checkout, .NET, NuGet source, restore) are intentionally inline.
+# Composite actions cannot be called from within a reusable workflow — the runner
+# checks out the CALLER's repository, so any ./ path resolves there, not here.
+# env: defined here does not flow into reusable workflow jobs (build-test); each
+# reusable workflow carries its own env block.
+
 on:
   workflow_call:
 
@@ -7,6 +13,10 @@ permissions:
   contents: write
   packages: write
   security-events: write
+
+env:
+  DOTNET_VERSION: "11.0.x"
+  DOTNET_QUALITY: "preview"
 
 jobs:
   build-test:
@@ -18,8 +28,17 @@ jobs:
       security-events: write
       contents: read
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
       - name: Setup .NET
-        uses: NorseArchitecture/.github/.github/actions/setup-dotnet@master
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-quality: ${{ env.DOTNET_QUALITY }}
+
+      - name: Add Norse NuGet source
+        run: dotnet nuget add source "https://nuget.pkg.github.com/NorseArchitecture/index.json" --name github
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -27,7 +46,9 @@ jobs:
           languages: csharp
 
       - name: Build
-        run: dotnet build --no-restore -c Release
+        run: |
+          dotnet restore
+          dotnet build -c Release
 
       - name: Analyze
         uses: github/codeql-action/analyze@v4
@@ -36,8 +57,17 @@ jobs:
     needs: [build-test, codeql]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
       - name: Setup .NET
-        uses: NorseArchitecture/.github/.github/actions/setup-dotnet@master
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-quality: ${{ env.DOTNET_QUALITY }}
+
+      - name: Add Norse NuGet source
+        run: dotnet nuget add source "https://nuget.pkg.github.com/NorseArchitecture/index.json" --name github
 
       - name: Pack
         run: dotnet pack -c Release -o ./artifacts/nupkg

@@ -1,5 +1,9 @@
 name: CI Build & Test
 
+# Setup steps (checkout, .NET, NuGet source, restore) are intentionally inline.
+# Composite actions cannot be called from within a reusable workflow — the runner
+# checks out the CALLER's repository, so any ./ path resolves there, not here.
+
 on:
   workflow_call:
     inputs:
@@ -8,20 +12,30 @@ on:
         type: number
         default: 0
 
+env:
+  DOTNET_VERSION: "11.0.x"
+  DOTNET_QUALITY: "preview"
+
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
-      - name: Setup .NET
-        uses: NorseArchitecture/.github/.github/actions/setup-dotnet@master
+      - name: Checkout
+        uses: actions/checkout@v7
 
-      - name: Build
-        run: dotnet build --no-restore -c Release
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-quality: ${{ env.DOTNET_QUALITY }}
+
+      - name: Add Norse NuGet source
+        run: dotnet nuget add source "https://nuget.pkg.github.com/NorseArchitecture/index.json" --name github
 
       - name: Test
-        run: dotnet test --no-build -c Release --coverage --coverage-output-format cobertura --coverage-output coverage.xml
+        run: dotnet test -c Release --coverage --coverage-output-format cobertura --coverage-output coverage.xml
 
       - name: Install ReportGenerator
         run: dotnet tool install -g dotnet-reportgenerator-globaltool --version 5.*
