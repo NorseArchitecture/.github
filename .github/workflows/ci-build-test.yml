@@ -39,8 +39,10 @@ jobs:
 
       - name: Generate coverage report
         run: |
+          COVERAGE_FILES=$(find . -name "coverage*.xml" -not -path "*/obj/*" | tr '\n' ';' | sed 's/;$//')
+          echo "Coverage files: $COVERAGE_FILES"
           reportgenerator \
-            -reports:coverage*.xml \
+            -reports:"$COVERAGE_FILES" \
             -targetdir:./coverage-report \
             -reporttypes:"MarkdownSummaryGithub;JsonSummary"
 
