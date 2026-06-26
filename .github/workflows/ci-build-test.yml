@@ -52,7 +52,7 @@ jobs:
       - name: Post coverage comment
         if: github.event_name == 'pull_request'
         continue-on-error: true
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           header: coverage
           path: ./coverage-report/SummaryGithub.md
