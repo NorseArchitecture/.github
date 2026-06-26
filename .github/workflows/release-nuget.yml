@@ -32,6 +32,9 @@ jobs:
         with:
           languages: csharp
 
+      - name: Add Norse NuGet source
+        uses: NorseArchitecture/.github/.github/actions/add-norse-nuget-source@master
+
       - name: Restore and build
         run: |
           dotnet restore
@@ -54,6 +57,9 @@ jobs:
         with:
           dotnet-version: "11.0.x"
           dotnet-quality: "preview"
+
+      - name: Add Norse NuGet source
+        uses: NorseArchitecture/.github/.github/actions/add-norse-nuget-source@master
 
       - name: Restore
         run: dotnet restore

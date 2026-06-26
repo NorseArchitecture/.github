@@ -30,8 +30,8 @@
 		nuget     = @(
 			'src/Directory.Build.props'
 			'tests/Directory.Build.props'
-			# 'src/Directory.Build.targets'   # UseProjectReferences — pending
-			# 'tests/Directory.Build.targets' # UseProjectReferences — pending
+			'src/Directory.Build.targets'
+			'tests/Directory.Build.targets'
 		)
 	}
 	Realms = @{
