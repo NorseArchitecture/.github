@@ -25,7 +25,7 @@ $Org = 'NorseArchitecture'
 $RulesetName = 'Law of the Aesir'
 
 # The founding realms. Add new repos here as they are born.
-$AllRepos = @('Asgard', 'Svartalfheim', 'Midgard', 'Yggdrasil', 'Urdarbrunnr', 'Ratatoskr', 'Heimdall', 'Himinbjorg', 'Nagalfar', 'Bifrost', 'Glitnir', '.github')
+$AllRepos = @('Asgard', 'Svartalfheim', 'Midgard', 'Yggdrasil', 'Urdarbrunnr', 'Ratatoskr', 'Heimdall', 'Himinbjorg', 'Naglfar', 'Bifrost', 'Glitnir', '.github')
 
 if (-not $Repos -or $Repos.Count -eq 0) {
 	$Repos = $AllRepos

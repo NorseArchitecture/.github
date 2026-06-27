@@ -31,9 +31,6 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           dotnet-quality: ${{ env.DOTNET_QUALITY }}
 
-      - name: Add Norse NuGet source
-        run: dotnet nuget add source "https://nuget.pkg.github.com/NorseArchitecture/index.json" --name github
-
       - name: Test
         run: dotnet test -c Release --coverage --coverage-output-format cobertura --coverage-output coverage.xml
 

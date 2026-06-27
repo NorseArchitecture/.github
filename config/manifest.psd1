@@ -49,7 +49,7 @@
 		# Aspire composition root — universal only; owns its own minimal host props
 		Bifrost      = @('universal')
 		# Design system — no .NET tooling; crafts its own .editorconfig
-		Nagalfar     = @('git')
+		Naglfar      = @('git')
 		# Docs and proofs of concept — git hygiene only
 		Glitnir      = @('git')
 	}
