@@ -13,6 +13,7 @@ permissions:
   contents: write
   packages: write
   security-events: write
+  pull-requests: write
 
 env:
   DOTNET_VERSION: "11.0.x"
