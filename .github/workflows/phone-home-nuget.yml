@@ -1,0 +1,44 @@
+name: Phone Home — NuGet CPM Update
+
+# Composite actions cannot be called cross-repo from a reusable workflow — the
+# runner checks out the caller's repository, so ./paths resolve there, not here.
+# Scripts are fetched by explicitly checking out NorseArchitecture/.github.
+# GITHUB_TOKEN in workflow_call is caller-scoped; secrets.token (SCATTER_PAT)
+# covers cross-repo reads (.github) and writes (Yggdrasil).
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+
+jobs:
+  update-cpm:
+    if: ${{ !contains(github.ref_name, '-') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout .github scripts
+        uses: actions/checkout@v7
+        with:
+          repository: NorseArchitecture/.github
+          token: ${{ secrets.token }}
+          path: github-src
+
+      - name: Checkout Yggdrasil
+        uses: actions/checkout@v7
+        with:
+          repository: NorseArchitecture/Yggdrasil
+          token: ${{ secrets.token }}
+          path: yggdrasil
+
+      - name: Configure git identity
+        run: |
+          git -C yggdrasil config user.name "github-actions[bot]"
+          git -C yggdrasil config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Phone home
+        env:
+          GH_TOKEN: ${{ secrets.token }}
+          REALM: ${{ github.event.repository.name }}
+          VERSION: ${{ github.ref_name }}
+        run: pwsh github-src/scripts/phone-home-nuget.ps1 -Realm "$env:REALM" -Tag "$env:VERSION" -YggdrasilPath yggdrasil
