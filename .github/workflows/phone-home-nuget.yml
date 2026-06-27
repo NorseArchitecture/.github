@@ -16,6 +16,9 @@ jobs:
   update-cpm:
     if: ${{ !contains(github.ref_name, '-') }}
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: pwsh
     steps:
       - name: Checkout .github scripts
         uses: actions/checkout@v7
@@ -41,4 +44,4 @@ jobs:
           GH_TOKEN: ${{ secrets.token }}
           REALM: ${{ github.event.repository.name }}
           VERSION: ${{ github.ref_name }}
-        run: pwsh github-src/scripts/phone-home-nuget.ps1 -Realm "$env:REALM" -Tag "$env:VERSION" -YggdrasilPath yggdrasil
+        run: ./github-src/scripts/phone-home-nuget.ps1 -Realm "$env:REALM" -Tag "$env:VERSION" -YggdrasilPath yggdrasil
