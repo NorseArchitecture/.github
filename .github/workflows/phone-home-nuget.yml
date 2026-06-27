@@ -44,4 +44,4 @@ jobs:
           GH_TOKEN: ${{ secrets.token }}
           REALM: ${{ github.event.repository.name }}
           VERSION: ${{ github.ref_name }}
-        run: ./github-src/scripts/phone-home-nuget.ps1 -Realm "$env:REALM" -Tag "$env:VERSION" -YggdrasilPath yggdrasil
+        run: ./github-src/scripts/phone-home-nuget.ps1 -Realm "$env:REALM" -Tag "$env:VERSION" -YggdrasilPath "$env:GITHUB_WORKSPACE/yggdrasil"
