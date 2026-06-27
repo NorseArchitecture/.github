@@ -35,7 +35,7 @@ Requires `gh` authenticated with admin on the target repos. It is idempotent (PU
 gh ruleset list -R NorseArchitecture/<repo>
 ```
 
-When adding a newly-born repo to the org, add it to `$AllRepos` in that script (currently: Asgard, Svartalfheim, Midgard, Yggdrasil, Urdarbrunnr, Bifrost, Glitnir, `.github`) — Heimdall/Himinbjorg are not yet listed and should be added when they go live.
+When adding a newly-born repo to the org, add it to `$AllRepos` in that script (currently: Asgard, Svartalfheim, Midgard, Yggdrasil, Urdarbrunnr, Ratatoskr, Heimdall, Himinbjorg, Nagalfar, Bifrost, Glitnir, `.github`).
 
 ## Architecture: the cosmos
 
@@ -46,12 +46,14 @@ Dependency order (each layer rides only on the ones above it):
 1. **Asgard** — `Norse.Abstractions.*`: contracts only, no implementations.
 2. **Svartalfheim** — `Norse.Primitives.*`: value types, identifiers, result parsing, encryption.
 3. **Urdarbrunnr** — `Norse.EntityFramework.*`: EF Core foundations (entity base types, DbContext, conventions, value converters, migrations chassis).
-4. **Midgard** — `Norse.Infrastructure.*`: concrete implementations of Asgard's contracts (persistence, messaging, caching, external integrations).
-5. **Yggdrasil** — `Norse.Hosting.*`: web/worker/migration service chassis.
-6. **Himinbjorg** — `Norse.Identity.*`: backend-only EF persistence for ASP.NET Identity/OpenIddict — never crosses to WASM or MAUI.
-7. **Heimdall** — `Norse.Access.*`: auth services on top of Himinbjorg, uniform across Blazor Server/WASM/MAUI.
-8. **Bifrost** — `Norse.Orchestration.*`: .NET Aspire composition layer wiring services, databases, queues, config into a running platform.
-9. **Glitnir** — the design court: specs, plans, and proof-of-concept verdicts. Specs are argued to convergence here *before* any of the above renders code.
+4. **Midgard** — `Norse.Infrastructure.*`: concrete implementations of Asgard's contracts (persistence, caching, external integrations).
+5. **Ratatoskr** — `Norse.NServiceBus.*`: NServiceBus endpoint configuration, saga infrastructure, message conventions, and transport wiring.
+6. **Yggdrasil** — `Norse.Hosting.*`: web/worker/migration service chassis.
+7. **Himinbjorg** — `Norse.Identity.*`: backend-only EF persistence for ASP.NET Identity/OpenIddict — never crosses to WASM or MAUI.
+8. **Heimdall** — `Norse.Access.*`: auth services on top of Himinbjorg, uniform across Blazor Server/WASM/MAUI.
+9. **Bifrost** — `Norse.Orchestration.*`: .NET Aspire composition layer wiring services, databases, queues, config into a running platform.
+10. **Nagalfar** — `Norse.DesignSystem.*`: design tokens, spacing scale, radii, typography, and component primitives. Standalone — no substrate dependencies. Purpose-built to be superseded when the product vision is realized.
+11. **Glitnir** — the design court: specs, plans, and proof-of-concept verdicts. Specs are argued to convergence here *before* any of the above renders code.
 
 Consuming services live under their own root (`{Company}.{Context}.*`), conform to `Norse.Abstractions`, and own everything above the substrate — the platform deliberately knows nothing about their domain (see the "three Billing contexts, zero shared code" example in `profile/README.md` for why that gap is the design, not a gap to close).
 
