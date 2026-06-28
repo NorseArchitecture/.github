@@ -2,6 +2,10 @@
 
 > The primordial void from which all realms emerged. GitHub enforces the repository name `.github`; the lore name is Ginnungagap.
 
+![Ginnungagap — the primordial void before all creation, where the ice of Niflheim and the fire of Muspelheim met and breathed the nine realms into being](https://github.com/user-attachments/assets/aad75315-256a-4103-815c-7534b5b0c22d "Ginnungagap — the void before creation, the source of all realms")
+
+*Image credit: [@norsemythologyclips](https://www.instagram.com/norsemythologyclips/) — go follow them.*
+
 This repository contains the organization profile and default community health files for Norse Architecture — the things that exist before and beneath every realm.
 
 ## What lives here
