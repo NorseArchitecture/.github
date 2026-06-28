@@ -142,6 +142,17 @@ foreach ($Repo in $Repos) {
 		continue
 	}
 
+	# Workflow permissions — allow GITHUB_TOKEN to approve PRs (required by auto-approve.yml).
+	gh api --method PUT "repos/$Org/$Repo/actions/permissions/workflow" `
+		-F can_approve_pull_request_reviews=true | Out-Null
+	if ($LASTEXITCODE -eq 0) {
+		Write-Host '    Workflow permissions applied.'
+	} else {
+		Write-Error -ErrorAction Continue '    FAILED to apply workflow permissions.'
+		$Failures += $Repo
+		continue
+	}
+
 	$ExistingId = gh api "repos/$Org/$Repo/rulesets" `
 		--jq ".[] | select(.name == `"$RulesetName`") | .id" 2>$null
 	if ($LASTEXITCODE -ne 0) {

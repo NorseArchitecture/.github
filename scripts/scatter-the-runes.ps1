@@ -114,7 +114,7 @@ foreach ($Realm in $TargetRealms) {
 				--base master `
 				--head $Branch `
 				--title 'sync: platform config from .github' `
-				--body 'Automated sync of canonical platform config files from the [.github](https://github.com/NorseArchitecture/.github) repo. Managed by ``config/manifest.psd1``.'
+				--body 'Automated sync of canonical platform config files from [Ginnungagap](https://github.com/NorseArchitecture/.github). Managed by ``config/manifest.psd1``.'
 			if ($LASTEXITCODE -ne 0) { throw "gh pr create failed (exit $LASTEXITCODE)" }
 			Write-Host "    PR: $PrUrl"
 

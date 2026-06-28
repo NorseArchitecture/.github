@@ -1,6 +1,6 @@
-# .github
+# Ginnungagap
 
-> Ginnungagap, the primordial void from which all realms emerged.
+> The primordial void from which all realms emerged. GitHub enforces the repository name `.github`; the lore name is Ginnungagap.
 
 This repository contains the organization profile and default community health files for Norse Architecture — the things that exist before and beneath every realm.
 
