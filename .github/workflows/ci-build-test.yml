@@ -15,6 +15,7 @@ on:
 env:
   DOTNET_VERSION: "11.0.x"
   DOTNET_QUALITY: "preview"
+  NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   build:
