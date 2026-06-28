@@ -69,7 +69,7 @@ foreach ($Realm in $TargetRealms) {
 
 		$RemoteBranchExists = git ls-remote --heads origin $Branch 2>$null
 		if ($RemoteBranchExists) {
-			git fetch origin $Branch --depth 1 --quiet
+			git fetch origin "${Branch}:refs/remotes/origin/${Branch}" --depth 1 --quiet
 			git checkout -b $Branch "origin/$Branch" --quiet
 		} else {
 			git checkout -b $Branch --quiet
