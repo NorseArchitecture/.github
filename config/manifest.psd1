@@ -21,6 +21,7 @@
 			'.gitignore'
 			'global.json'
 			'LICENSE'
+			'nuget.config'
 		)
 		# Root MSBuild props — repos with a .NET build but not shipping to NuGet
 		dotnet    = @(
