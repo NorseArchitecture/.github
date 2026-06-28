@@ -19,8 +19,6 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      NUGET_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
     permissions:
       pull-requests: write
     steps:
@@ -34,6 +32,8 @@ jobs:
           dotnet-quality: ${{ env.DOTNET_QUALITY }}
 
       - name: Test
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
         run: dotnet test -c Release --coverage --coverage-output-format cobertura --coverage-output coverage.xml
 
       - name: Install ReportGenerator
