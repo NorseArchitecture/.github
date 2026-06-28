@@ -36,9 +36,6 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           dotnet-quality: ${{ env.DOTNET_QUALITY }}
 
-      - name: Add Norse NuGet source
-        run: dotnet nuget add source "https://nuget.pkg.github.com/NorseArchitecture/index.json" --name github
-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
@@ -64,9 +61,6 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           dotnet-quality: ${{ env.DOTNET_QUALITY }}
-
-      - name: Add Norse NuGet source
-        run: dotnet nuget add source "https://nuget.pkg.github.com/NorseArchitecture/index.json" --name github
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
