@@ -15,12 +15,13 @@ on:
 env:
   DOTNET_VERSION: "11.0.x"
   DOTNET_QUALITY: "preview"
-  NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  NUGET_AUTH_TOKEN: ${{ github.token }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
+      packages: read
       pull-requests: write
     steps:
       - name: Checkout
