@@ -35,28 +35,32 @@
 			'tests/Directory.Build.props'
 			'tests/Directory.Build.targets'
 		)
-		# Platform workflows — all realms except Bifrost (composition root manages its own)
+		# CI workflows — all realms including Bifrost
+		ci        = @(
+			'.github/workflows/auto-approve.yml'
+		)
+		# Platform workflows — all realms except Bifrost (update-bifrost must not run in Bifrost)
 		workflows = @(
 			'.github/workflows/update-bifrost.yml'
 		)
 	}
 	Realms = @{
 		# NuGet-shipping platform realms
-		Svartalfheim = @('universal', 'dotnet', 'nuget', 'tests', 'workflows')
-		Asgard       = @('universal', 'dotnet', 'nuget', 'tests', 'workflows')
-		Midgard      = @('universal', 'dotnet', 'nuget', 'tests', 'workflows')
-		Urdarbrunnr  = @('universal', 'dotnet', 'nuget', 'tests', 'workflows')
-		Ratatoskr    = @('universal', 'dotnet', 'nuget', 'tests', 'workflows')
-		Heimdall     = @('universal', 'dotnet', 'nuget', 'tests', 'workflows')
-		Himinbjorg   = @('universal', 'dotnet', 'nuget', 'tests', 'workflows')
+		Svartalfheim = @('universal', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+		Asgard       = @('universal', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+		Midgard      = @('universal', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+		Urdarbrunnr  = @('universal', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+		Ratatoskr    = @('universal', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+		Heimdall     = @('universal', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+		Himinbjorg   = @('universal', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
 		# Runtime host — universal + dotnet + tests; owns its own src/ props
 		# (no IsAotCompatible=true, uses CPM — incompatible with nuget group files)
-		Yggdrasil    = @('universal', 'dotnet', 'tests', 'workflows')
+		Yggdrasil    = @('universal', 'dotnet', 'tests', 'ci', 'workflows')
 		# Aspire composition root — universal only; owns its own minimal host props
-		Bifrost      = @('universal')
+		Bifrost      = @('universal', 'ci')
 		# Design system — no .NET tooling; crafts its own .editorconfig
-		Naglfar      = @('git', 'workflows')
+		Naglfar      = @('git', 'ci', 'workflows')
 		# Docs and proofs of concept — git hygiene only
-		Glitnir      = @('git', 'workflows')
+		Glitnir      = @('git', 'ci', 'workflows')
 	}
 }

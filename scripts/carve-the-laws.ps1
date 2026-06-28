@@ -21,24 +21,36 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$Org = 'NorseArchitecture'
+$Org         = 'NorseArchitecture'
 $RulesetName = 'Law of the Aesir'
 
-# The founding realms. Add new repos here as they are born.
-$AllRepos = @('Asgard', 'Svartalfheim', 'Midgard', 'Yggdrasil', 'Urdarbrunnr', 'Ratatoskr', 'Heimdall', 'Himinbjorg', 'Naglfar', 'Bifrost', 'Glitnir', '.github')
+# Repos that carry the CI gate (gate / build status check required to merge).
+$GatedRepos = [System.Collections.Generic.HashSet[string]]@(
+	'Asgard', 'Svartalfheim', 'Midgard', 'Yggdrasil', 'Urdarbrunnr',
+	'Ratatoskr', 'Heimdall', 'Himinbjorg'
+)
+
+# Repos without a build system — gate / build never fires, so status check
+# is omitted. Enforcement will be tightened per-repo as CI policies are defined
+# (e.g. required_approving_review_count >= 1 until a real gate exists).
+$UngatedRepos = [System.Collections.Generic.HashSet[string]]@(
+	'.github', 'Bifrost', 'Naglfar', 'Glitnir'
+)
+
+$AllRepos = @($GatedRepos) + @($UngatedRepos) | Sort-Object
 
 if (-not $Repos -or $Repos.Count -eq 0) {
 	$Repos = $AllRepos
 }
 
 # ---------------------------------------------------------------------------
-# The law itself.
+# Builds the ruleset JSON for a given repo.
 #
 # Notes on the choices encoded here:
-#   - required_approving_review_count: 0 — solo-maintainer mode. The PR
-#     workflow (no direct push, CI green, threads resolved) is enforced
-#     without self-approval theater. Raise to 1+ when a second contributor
-#     arrives.
+#   - required_approving_review_count: 1 — one approval required. Platform
+#     PRs (sync/platform-config, update/cpm/*) are auto-approved by the
+#     auto-approve.yml workflow via GITHUB_TOKEN; human PRs require a real
+#     review. Ungated repos use this in place of a CI gate.
 #   - bypass_actors actor_id 5 = Repository admin role. bypass_mode
 #     "always" lets an admin push directly in an emergency; change to
 #     "pull_request" to allow bypass only through a PR.
@@ -50,47 +62,56 @@ if (-not $Repos -or $Repos.Count -eq 0) {
 #   - deletion + non_fast_forward: nobody deletes or force-pushes the
 #     default branch. Including you. Especially at 2 AM.
 # ---------------------------------------------------------------------------
-$Ruleset = @{
-	name = $RulesetName
-	target = 'branch'
-	enforcement = 'active'
-	conditions = @{
-		ref_name = @{
-			include = @('~DEFAULT_BRANCH')
-			exclude = @()
-		}
-	}
-	bypass_actors = @(
-		@{
-			actor_id = 5
-			actor_type = 'RepositoryRole'
-			bypass_mode = 'always'
-		}
-	)
-	rules = @(
+function New-Ruleset {
+	param([bool]$Gated)
+
+	$Rules = @(
 		@{ type = 'deletion' }
 		@{ type = 'non_fast_forward' }
 		@{
-			type = 'pull_request'
+			type       = 'pull_request'
 			parameters = @{
-				required_approving_review_count = 0
-				dismiss_stale_reviews_on_push = $true
-				require_code_owner_review = $false
-				require_last_push_approval = $false
+				required_approving_review_count = 1
+				dismiss_stale_reviews_on_push   = $true
+				require_code_owner_review        = $false
+				require_last_push_approval       = $false
 				required_review_thread_resolution = $true
 			}
 		}
-		@{
-			type = 'required_status_checks'
+	)
+
+	if ($Gated) {
+		$Rules += @{
+			type       = 'required_status_checks'
 			parameters = @{
 				strict_required_status_checks_policy = $true
-				required_status_checks = @(
+				required_status_checks               = @(
 					@{ context = 'gate / build'; integration_id = 15368 }
 				)
 			}
 		}
-	)
-} | ConvertTo-Json -Depth 10
+	}
+
+	@{
+		name        = $RulesetName
+		target      = 'branch'
+		enforcement = 'active'
+		conditions  = @{
+			ref_name = @{
+				include = @('~DEFAULT_BRANCH')
+				exclude = @()
+			}
+		}
+		bypass_actors = @(
+			@{
+				actor_id   = 5
+				actor_type = 'RepositoryRole'
+				bypass_mode = 'always'
+			}
+		)
+		rules = $Rules
+	} | ConvertTo-Json -Depth 10
+}
 
 # ---------------------------------------------------------------------------
 # Apply: repo settings, then ruleset.
@@ -100,8 +121,16 @@ $Failures = @()
 foreach ($Repo in $Repos) {
 	Write-Host "==> $Org/$Repo"
 
+	if (-not $GatedRepos.Contains($Repo) -and -not $UngatedRepos.Contains($Repo)) {
+		Write-Warning "    $Repo not in gated or ungated list — skipping"
+		continue
+	}
+
+	$Ruleset = New-Ruleset -Gated $GatedRepos.Contains($Repo)
+	$Gate    = if ($GatedRepos.Contains($Repo)) { 'gated' } else { 'ungated' }
+
 	# Repo settings — idempotent PATCH; safe to run repeatedly.
-	Write-Host '    Applying repo settings...'
+	Write-Host "    Applying repo settings ($Gate)..."
 	gh api --method PATCH "repos/$Org/$Repo" `
 		-F delete_branch_on_merge=true `
 		-F allow_auto_merge=true | Out-Null
