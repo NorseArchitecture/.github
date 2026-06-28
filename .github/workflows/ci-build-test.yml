@@ -21,7 +21,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      packages: read
       pull-requests: write
     steps:
       - name: Checkout
