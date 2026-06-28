@@ -1,0 +1,177 @@
+name: Container Release
+
+# Setup steps (checkout, .NET, NuGet source) are intentionally inline.
+# Composite actions cannot be called from within a reusable workflow — the runner
+# checks out the CALLER's repository, so any ./ path resolves there, not here.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: write
+  packages: write
+  security-events: write
+
+env:
+  DOTNET_VERSION: "11.0.x"
+  DOTNET_QUALITY: "preview"
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci-build-test.yml
+
+  codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-quality: ${{ env.DOTNET_QUALITY }}
+
+      - name: Add Norse NuGet source
+        run: dotnet nuget add source "https://nuget.pkg.github.com/NorseArchitecture/index.json" --name github
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: csharp
+
+      - name: Build
+        run: |
+          dotnet restore
+          dotnet build -c Release
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4
+
+  package:
+    needs: [ci, codeql]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-quality: ${{ env.DOTNET_QUALITY }}
+
+      - name: Add Norse NuGet source
+        run: dotnet nuget add source "https://nuget.pkg.github.com/NorseArchitecture/index.json" --name github
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version
+        id: version
+        run: echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      # ── migrations ──────────────────────────────────────────────────────────
+
+      - name: Publish migrations image (local daemon)
+        run: |
+          dotnet publish src/Hosting.Migrations.Service/Hosting.Migrations.Service.csproj \
+            --os linux --arch x64 -c Release /t:PublishContainer \
+            /p:ContainerRepository=norsearchitecture/hosting/migrations \
+            /p:ContainerImageTag=${{ steps.version.outputs.value }}
+
+      - name: Scan migrations image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: norsearchitecture/hosting/migrations:${{ steps.version.outputs.value }}
+          format: cyclonedx
+          output: sbom-migrations.cdx.json
+          exit-code: '1'
+          severity: HIGH,CRITICAL
+
+      - name: Push migrations image
+        run: |
+          docker tag norsearchitecture/hosting/migrations:${{ steps.version.outputs.value }} \
+            ghcr.io/norsearchitecture/hosting/migrations:${{ steps.version.outputs.value }}
+          docker push ghcr.io/norsearchitecture/hosting/migrations:${{ steps.version.outputs.value }}
+
+      # ── web ─────────────────────────────────────────────────────────────────
+
+      - name: Publish web image (local daemon)
+        run: |
+          dotnet publish src/Hosting.Web.Server/Hosting.Web.Server.csproj \
+            --os linux --arch x64 -c Release /t:PublishContainer \
+            /p:ContainerRepository=norsearchitecture/hosting/web \
+            /p:ContainerImageTag=${{ steps.version.outputs.value }}
+
+      - name: Scan web image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: norsearchitecture/hosting/web:${{ steps.version.outputs.value }}
+          format: cyclonedx
+          output: sbom-web.cdx.json
+          exit-code: '1'
+          severity: HIGH,CRITICAL
+
+      - name: Push web image
+        run: |
+          docker tag norsearchitecture/hosting/web:${{ steps.version.outputs.value }} \
+            ghcr.io/norsearchitecture/hosting/web:${{ steps.version.outputs.value }}
+          docker push ghcr.io/norsearchitecture/hosting/web:${{ steps.version.outputs.value }}
+
+      # ── worker ──────────────────────────────────────────────────────────────
+
+      - name: Publish worker image (local daemon)
+        run: |
+          dotnet publish src/Hosting.Worker/Hosting.Worker.csproj \
+            --os linux --arch x64 -c Release /t:PublishContainer \
+            /p:ContainerRepository=norsearchitecture/hosting/worker \
+            /p:ContainerImageTag=${{ steps.version.outputs.value }}
+
+      - name: Scan worker image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: norsearchitecture/hosting/worker:${{ steps.version.outputs.value }}
+          format: cyclonedx
+          output: sbom-worker.cdx.json
+          exit-code: '1'
+          severity: HIGH,CRITICAL
+
+      - name: Push worker image
+        run: |
+          docker tag norsearchitecture/hosting/worker:${{ steps.version.outputs.value }} \
+            ghcr.io/norsearchitecture/hosting/worker:${{ steps.version.outputs.value }}
+          docker push ghcr.io/norsearchitecture/hosting/worker:${{ steps.version.outputs.value }}
+
+      # ── release ─────────────────────────────────────────────────────────────
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            sbom-migrations.cdx.json \
+            sbom-web.cdx.json \
+            sbom-worker.cdx.json \
+            --generate-notes
+
+  deploy-hook:
+    needs: [package]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to feature environment
+        if: ${{ contains(github.ref_name, '-') }}
+        run: |
+          echo "Pre-release ${{ github.ref_name }} — deploy hook target: feature environment (not yet implemented)"
+
+      - name: Deploy to dev/integration
+        if: ${{ !contains(github.ref_name, '-') }}
+        run: |
+          echo "Stable ${{ github.ref_name }} — deploy hook target: dev/integration environment (not yet implemented)"
