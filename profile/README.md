@@ -41,7 +41,7 @@ The substrate stacks in one direction, and your code sits on top of all of it:
 4. **Midgard does the work** — the law, implemented: every infrastructure decision made once, correctly.
 5. **Ratatoskr carries the messages** — NServiceBus endpoint configuration, saga infrastructure, and transport wiring, so the Æsir declare the messaging surface and every realm picks its own courier.
 6. **Yggdrasil carries the load** — a hardened chassis for web, worker, and migration services, so a new service starts at "write your domain," not "configure your host."
-7. **Himinbjörg keeps the roll** — EF persistence for ASP.NET Identity and OpenIddict, sealed server-side: the record of who is known, on which every realm that defers to Heimdall's judgment stands.
+7. **Himinbjörg keeps the roll call** — EF persistence for ASP.NET Identity and OpenIddict, sealed server-side: the record of who is known, on which every realm that defers to Heimdall's judgment stands.
 8. **Heimdall guards the gate** — one access ruleset enforced identically across Blazor Server, WASM, and MAUI, with admin components and the backing gRPC service, so the law of passage is declared once and crossed nowhere it isn't permitted.
 9. **Bifröst bridges it together** — one orchestration layer composing every resource, from first `dotnet run` on a laptop to deployment.
 
