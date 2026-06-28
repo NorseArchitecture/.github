@@ -15,11 +15,12 @@ on:
 env:
   DOTNET_VERSION: "11.0.x"
   DOTNET_QUALITY: "preview"
-  NUGET_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      NUGET_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
     permissions:
       pull-requests: write
     steps:
