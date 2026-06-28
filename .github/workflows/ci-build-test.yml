@@ -31,6 +31,9 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           dotnet-quality: ${{ env.DOTNET_QUALITY }}
 
+      - name: Debug auth
+        run: echo "PACKAGES_READ_TOKEN set=${{ secrets.PACKAGES_READ_TOKEN != '' }}"
+
       - name: Test
         env:
           NUGET_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
