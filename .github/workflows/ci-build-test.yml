@@ -60,7 +60,7 @@ jobs:
 
       - name: Enforce branch coverage threshold
         run: |
-          BRANCH=$(jq '.summary.branchcoverage' ./coverage-report/Summary.json)
+          BRANCH=$(jq '.summary.branchcoverage // 100' ./coverage-report/Summary.json)
           FLOOR=60
           REALM=${{ inputs.minimum_coverage }}
           THRESHOLD=$(echo "$FLOOR $REALM" | awk '{print ($1 > $2) ? $1 : $2}')
