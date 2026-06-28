@@ -94,7 +94,7 @@ foreach ($Realm in $TargetRealms) {
 			continue
 		}
 
-		git commit -m 'sync: platform config from .github' --quiet
+		git commit -m 'sync: platform config from Ginnungagap' --quiet
 		if ($LASTEXITCODE -ne 0) { throw "git commit failed (exit $LASTEXITCODE)" }
 
 		git push origin $Branch --force-with-lease --quiet
