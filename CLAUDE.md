@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repository is
 
-This repository is **Ginnungagap** — the primordial void from which all realms emerged. GitHub enforces the name `.github`; the lore name is Ginnungagap. It supplies `profile/README.md` (the org's public profile page) and the default community-health files — `CONTRIBUTING.md`, `SECURITY.md`, `SUPPORT.md` — that apply to every repo in the org that doesn't override them. It also hosts the reusable GitHub Actions workflows, the config scatter system, and `scripts/carve-the-laws.ps1`, the `gh`-CLI automation that carves the Law of the Aesir across the org's repos. Treat this repo as docs-plus-automation, not a service.
+This repository is **Ginnungagap** — the primordial void from which all realms emerged. GitHub enforces the name `.github`; the lore name is Ginnungagap. It supplies `profile/README.md` (the org's public profile page) and the default community-health files — `CONTRIBUTING.md`, `SECURITY.md`, `SUPPORT.md` — that apply to every repo in the org that doesn't override them. It also hosts the reusable GitHub Actions workflows, the config scatter system, and `scripts/carve-the-laws.ps1`, the `gh`-CLI automation that carves the Law of the Æsir across the org's repos. Treat this repo as docs-plus-automation, not a service.
 
 ## Commands
 
@@ -25,7 +25,7 @@ Generate the replacement token at **GitHub → Settings → Developer settings �
 The only other operational command is the ruleset script:
 
 ```powershell
-./scripts/carve-the-laws.ps1            # apply "Law of the Aesir" to every repo in $AllRepos
+./scripts/carve-the-laws.ps1            # apply "Law of the Æsir" to every repo in $AllRepos
 ./scripts/carve-the-laws.ps1 Asgard     # apply to a single repo
 ```
 

@@ -16,6 +16,22 @@ This repository is the substrate beneath every realm in Norse Architecture — t
 - `scripts/` — PowerShell automation: [`carve-the-laws.ps1`](scripts/carve-the-laws.ps1) enforces branch rulesets org-wide, [`scatter-the-runes.ps1`](scripts/scatter-the-runes.ps1) distributes config, [`phone-home-nuget.ps1`](scripts/phone-home-nuget.ps1) bumps CPM versions in Yggdrasil after each realm release
 - `.github/workflows/` — six reusable workflows consumed across every realm
 
+## Carve the laws
+
+`scripts/carve-the-laws.ps1` applies the "Law of the Æsir" branch ruleset to every realm via the GitHub API. Idempotent — PUT if a same-named ruleset exists, POST otherwise:
+
+```powershell
+pwsh scripts/carve-the-laws.ps1                                    # all realms
+pwsh scripts/carve-the-laws.ps1 Asgard                             # one realm
+pwsh scripts/carve-the-laws.ps1 -Repos Asgard,Svartalfheim,Midgard  # selected realms
+```
+
+Requires `gh` authenticated with admin on the target repos. Verify a change with:
+
+```bash
+gh ruleset list -R NorseArchitecture/<realm>
+```
+
 ## Config scatter
 
 `config/` is the single source of truth for platform-wide config — `.editorconfig`, `.gitattributes`, `.gitignore`, `global.json`, `nuget.config`, `LICENSE`, MSBuild props, and CI workflows. `config/manifest.psd1` assigns each realm one or more named file groups.
@@ -23,9 +39,10 @@ This repository is the substrate beneath every realm in Norse Architecture — t
 Any push to `config/**` on `master` triggers `scatter-the-runes.yml`, which runs `scatter-the-runes.ps1`. The script clones each realm, copies its assigned files, and opens an auto-merge PR — or pushes onto an existing sync branch if one is already open. Idempotent and safe to re-run manually:
 
 ```powershell
-pwsh scripts/scatter-the-runes.ps1               # all realms
-pwsh scripts/scatter-the-runes.ps1 Svartalfheim  # one realm
-pwsh scripts/scatter-the-runes.ps1 -DryRun       # print plan, no writes
+pwsh scripts/scatter-the-runes.ps1                                    # all realms
+pwsh scripts/scatter-the-runes.ps1 Svartalfheim                       # one realm
+pwsh scripts/scatter-the-runes.ps1 -Realms Asgard,Svartalfheim,Midgard  # selected realms
+pwsh scripts/scatter-the-runes.ps1 -DryRun                            # print plan, no writes
 ```
 
 Requires `SCATTER_PAT` — a PAT with `repo` scope set as an org secret. Locally: `gh auth login` or `$env:GH_TOKEN`.

@@ -2,7 +2,7 @@
 #
 # carve-the-laws.ps1
 #
-# Applies the "Law of the Aesir" branch ruleset to every repository in the
+# Applies the "Law of the Æsir" branch ruleset to every repository in the
 # Norse Architecture organization. Idempotent: if a ruleset with the same
 # name already exists on a repo, it is updated in place; otherwise created.
 #
@@ -22,7 +22,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $Org         = 'NorseArchitecture'
-$RulesetName = 'Law of the Aesir'
+$RulesetName = 'Law of the Æsir'
 
 # Repos that carry the CI gate (gate / build status check required to merge).
 $GatedRepos = [System.Collections.Generic.HashSet[string]]@(
