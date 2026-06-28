@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repository is
 
-`NorseArchitecture/.github` is the special GitHub org-default repo: it supplies `profile/README.md` (the org's public profile page) and the default community-health files — `CONTRIBUTING.md`, `SECURITY.md`, `SUPPORT.md` — that apply to every repo in the org that doesn't override them. There is no application code here; the only executable is `scripts/carve-the-laws.ps1`, a `gh`-CLI automation script that applies a branch-protection ruleset ("Law of the Aesir") across the org's repos. Treat this repo as docs-plus-automation, not a service.
+This repository is **Ginnungagap** — the primordial void from which all realms emerged. GitHub enforces the name `.github`; the lore name is Ginnungagap. It supplies `profile/README.md` (the org's public profile page) and the default community-health files — `CONTRIBUTING.md`, `SECURITY.md`, `SUPPORT.md` — that apply to every repo in the org that doesn't override them. It also hosts the reusable GitHub Actions workflows, the config scatter system, and `scripts/carve-the-laws.ps1`, the `gh`-CLI automation that carves the Law of the Aesir across the org's repos. Treat this repo as docs-plus-automation, not a service.
 
 ## Commands
 
@@ -35,7 +35,7 @@ Requires `gh` authenticated with admin on the target repos. It is idempotent (PU
 gh ruleset list -R NorseArchitecture/<repo>
 ```
 
-When adding a newly-born repo to the org, add it to `$AllRepos` in that script (currently: Asgard, Svartalfheim, Midgard, Yggdrasil, Urdarbrunnr, Ratatoskr, Heimdall, Himinbjorg, Naglfar, Bifrost, Glitnir, `.github`).
+When adding a newly-born repo to the org, add it to `$GatedRepos` or `$UngatedRepos` in that script (currently gated: Asgard, Svartalfheim, Midgard, Yggdrasil, Urdarbrunnr, Ratatoskr, Heimdall, Himinbjorg; currently ungated: Bifrost, Naglfar, Glitnir, `.github` / Ginnungagap).
 
 ## Architecture: the cosmos
 
@@ -49,9 +49,9 @@ Dependency order (each layer rides only on the ones above it):
 4. **Midgard** — `Norse.Infrastructure.*`: concrete implementations of Asgard's contracts (persistence, caching, external integrations).
 5. **Ratatoskr** — `Norse.NServiceBus.*`: NServiceBus endpoint configuration, saga infrastructure, message conventions, and transport wiring.
 6. **Yggdrasil** — `Norse.Hosting.*`: web/worker/migration service chassis.
-7. **Himinbjorg** — `Norse.Identity.*`: backend-only EF persistence for ASP.NET Identity/OpenIddict — never crosses to WASM or MAUI.
-8. **Heimdall** — `Norse.Access.*`: auth services on top of Himinbjorg, uniform across Blazor Server/WASM/MAUI.
-9. **Bifrost** — `Norse.Orchestration.*`: .NET Aspire composition layer wiring services, databases, queues, config into a running platform.
+7. **Himinbjörg** — `Norse.Identity.*`: backend-only EF persistence for ASP.NET Identity/OpenIddict — never crosses to WASM or MAUI.
+8. **Heimdall** — `Norse.Access.*`: auth services on top of Himinbjörg, uniform across Blazor Server/WASM/MAUI.
+9. **Bifröst** — `Norse.Orchestration.*`: .NET Aspire composition layer wiring services, databases, queues, config into a running platform.
 10. **Naglfar** — `Norse.DesignSystem.*`: design tokens, spacing scale, radii, typography, and component primitives. Standalone — no substrate dependencies. Purpose-built to be superseded when the product vision is realized.
 11. **Glitnir** — the design court: specs, plans, and proof-of-concept verdicts. Specs are argued to convergence here *before* any of the above renders code.
 
