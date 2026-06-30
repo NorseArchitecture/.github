@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
 #
-# phone-home-nuget.ps1
+# sound-gjallarhorn.ps1
 #
 # Updates <{Realm}Version> in Yggdrasil/Directory.Packages.props and opens
 # an auto-merge PR. Idempotent: force-pushes onto the existing branch so a
@@ -12,8 +12,8 @@
 #   git user.name and user.email configured inside $YggdrasilPath (workflow step sets these)
 #
 # Usage:
-#   pwsh scripts/phone-home-nuget.ps1 -Realm Svartalfheim -Tag v0.0.2 -YggdrasilPath ./yggdrasil
-#   pwsh scripts/phone-home-nuget.ps1 -Realm Svartalfheim -Tag v0.0.2 -YggdrasilPath ./yggdrasil -DryRun
+#   pwsh scripts/sound-gjallarhorn.ps1 -Realm Svartalfheim -Tag v0.0.2 -YggdrasilPath ./yggdrasil
+#   pwsh scripts/sound-gjallarhorn.ps1 -Realm Svartalfheim -Tag v0.0.2 -YggdrasilPath ./yggdrasil -DryRun
 
 param(
 	[Parameter(Mandatory)]
@@ -38,7 +38,7 @@ $PropFile = Join-Path $YggdrasilPath 'Directory.Packages.props'
 
 # Belt-and-suspenders: skip pre-release even if the workflow if: condition missed it
 if ($Version.Contains('-')) {
-	Write-Host "==> Pre-release $Version — skipping phone home."
+	Write-Host "==> Pre-release $Version — skipping sounding Gjallarhorn."
 	exit 0
 }
 

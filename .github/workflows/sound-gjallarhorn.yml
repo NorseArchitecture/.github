@@ -1,4 +1,4 @@
-name: Phone Home — NuGet CPM Update
+name: Sound Gjallarhorn
 
 # Composite actions cannot be called cross-repo from a reusable workflow — the
 # runner checks out the caller's repository, so ./paths resolve there, not here.

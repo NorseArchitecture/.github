@@ -1,4 +1,4 @@
-name: Update Bifrost Submodule
+name: Update Bifrost
 
 on:
   workflow_call:
