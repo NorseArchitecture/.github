@@ -39,9 +39,9 @@ jobs:
           git -C yggdrasil config user.name "github-actions[bot]"
           git -C yggdrasil config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Phone home
+      - name: Sound Gjallarhorn
         env:
           GH_TOKEN: ${{ secrets.token }}
           REALM: ${{ github.event.repository.name }}
           VERSION: ${{ github.ref_name }}
-        run: ./github-src/scripts/phone-home-nuget.ps1 -Realm "$env:REALM" -Tag "$env:VERSION" -YggdrasilPath "$env:GITHUB_WORKSPACE/yggdrasil"
+        run: ./github-src/scripts/sound-gjallarhorn.ps1 -Realm "$env:REALM" -Tag "$env:VERSION" -YggdrasilPath "$env:GITHUB_WORKSPACE/yggdrasil"
