@@ -16,9 +16,13 @@
 			'.editorconfig'
 			'.gitattributes'
 			'.gitignore'
-			'global.json'
 			'LICENSE'
 			'nuget.config'
+		)
+		# Shared SDK pin — separate from 'universal' so a realm can own its
+		# own global.json (e.g. Bifrost layers a local msbuild-sdks entry)
+		sdk       = @(
+			'global.json'
 		)
 		# Root MSBuild props — repos with a .NET build but not shipping to NuGet
 		dotnet    = @(
@@ -46,17 +50,19 @@
 	}
 	Realms = @{
 		# NuGet-shipping platform realms
-		Svartalfheim = @('universal', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
-		Asgard       = @('universal', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
-		Midgard      = @('universal', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
-		Urdarbrunnr  = @('universal', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
-		Ratatoskr    = @('universal', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
-		Heimdall     = @('universal', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
-		Himinbjorg   = @('universal', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+		Svartalfheim = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+		Asgard       = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+		Midgard      = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+		Urdarbrunnr  = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+		Ratatoskr    = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+		Heimdall     = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+		Himinbjorg   = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
 		# Runtime host — universal + dotnet + tests; owns its own src/ props
 		# (no IsAotCompatible=true, uses CPM — incompatible with nuget group files)
-		Yggdrasil    = @('universal', 'dotnet', 'tests', 'ci', 'workflows')
-		# Aspire composition root — universal only; owns its own minimal host props
+		Yggdrasil    = @('universal', 'sdk', 'dotnet', 'tests', 'ci', 'workflows')
+		# Aspire composition root — universal only; owns its own global.json
+		# (local msbuild-sdks entry for Microsoft.Build.NoTargets, used by Glitnir's
+		# doc-glob project since Glitnir has no global.json of its own)
 		Bifrost      = @('universal', 'ci')
 		# Design system — no .NET tooling; crafts its own .editorconfig
 		Naglfar      = @('git', 'ci', 'workflows')
