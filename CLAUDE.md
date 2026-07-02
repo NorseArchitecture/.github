@@ -8,7 +8,7 @@ This repository is **Ginnungagap** — the primordial void from which all realms
 
 ## Commands
 
-There is no build/lint/test pipeline in this repo (no CI workflows, no `.editorconfig`). Operational commands:
+There is no build/lint/test pipeline *for this repo's own content* — no `.editorconfig` at the root, no C# to compile. Most files under `.github/workflows/` are `workflow_call`-only definitions consumed by other realms; the one exception is `scatter-the-runes.yml`, which does trigger on pushes to `config/**` here (see Config scatter below). Operational commands:
 
 ### Org secrets
 
@@ -20,9 +20,13 @@ gh secret set BIFROST_TOKEN --org NorseArchitecture --visibility all --body "<to
 
 Generate the replacement token at **GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens**: resource owner `NorseArchitecture`, repository `Bifrost`, permission `Contents: write`. Token was first set 2026-06-26 with a 366-day expiry — renewal due ~2027-06-27.
 
-### Branch ruleset
+**`SCATTER_PAT`** — classic PAT with `repo` scope, set as an org secret. Used by `scatter-the-runes.yml` (fans `config/**` out to every realm) and `sound-gjallarhorn.yml` (cross-repo checkout of this repo's scripts plus a push/PR against Yggdrasil). Set with:
 
-The only other operational command is the ruleset script:
+```bash
+gh secret set SCATTER_PAT --org NorseArchitecture --visibility all --body "<token>"
+```
+
+### Branch ruleset
 
 ```powershell
 ./scripts/carve-the-laws.ps1            # apply "Law of the Æsir" to every repo in $AllRepos
@@ -36,6 +40,20 @@ gh ruleset list -R NorseArchitecture/<repo>
 ```
 
 When adding a newly-born repo to the org, add it to `$GatedRepos` or `$UngatedRepos` in that script (currently gated: Asgard, Svartalfheim, Midgard, Yggdrasil, Urdarbrunnr, Ratatoskr, Heimdall, Himinbjorg; currently ungated: Bifrost, Naglfar, Glitnir, `.github` / Ginnungagap).
+
+### Config scatter
+
+`config/` (with `config/manifest.psd1` declaring which file groups each realm receives) is the source of truth for platform-wide config — `.editorconfig`, `.gitattributes`, `.gitignore`, `global.json`, `nuget.config`, `LICENSE`, MSBuild props, and the realm-facing `release.yml`. A push to `config/**` on `master` triggers `scatter-the-runes.yml` automatically; it can also be run by hand:
+
+```powershell
+./scripts/scatter-the-runes.ps1                                    # all realms
+./scripts/scatter-the-runes.ps1 Svartalfheim                       # one realm
+./scripts/scatter-the-runes.ps1 -DryRun                            # print plan, no writes
+```
+
+Idempotent — clones each realm, copies its assigned files, and opens (or updates) an auto-merge PR. Requires `SCATTER_PAT`; locally, `gh auth login` or `$env:GH_TOKEN` substitutes for it.
+
+`scripts/sound-gjallarhorn.ps1` (renamed from `phone-home-nuget.ps1` on 2026-06-30 — check any older notes for the stale name) is the other scatter-adjacent script: it bumps `<{Realm}Version>` in Yggdrasil's `Directory.Packages.props` after a realm's tagged release and opens an auto-merge PR there. It's invoked by `sound-gjallarhorn.yml`, not run by hand.
 
 ## Architecture: the cosmos
 

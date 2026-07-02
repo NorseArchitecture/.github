@@ -13,7 +13,7 @@ This repository is the substrate beneath every realm in Norse Architecture — t
 - `profile/README.md` — the organization profile at [github.com/NorseArchitecture](https://github.com/NorseArchitecture)
 - [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md), [`SUPPORT.md`](SUPPORT.md) — community health defaults applied to every realm that doesn't provide its own
 - `config/` — canonical platform config files fanned out to every realm by the scatter system; `manifest.psd1` declares which files each realm receives
-- `scripts/` — PowerShell automation: [`carve-the-laws.ps1`](scripts/carve-the-laws.ps1) enforces branch rulesets org-wide, [`scatter-the-runes.ps1`](scripts/scatter-the-runes.ps1) distributes config, [`phone-home-nuget.ps1`](scripts/phone-home-nuget.ps1) bumps CPM versions in Yggdrasil after each realm release
+- `scripts/` — PowerShell automation: [`carve-the-laws.ps1`](scripts/carve-the-laws.ps1) enforces branch rulesets org-wide, [`scatter-the-runes.ps1`](scripts/scatter-the-runes.ps1) distributes config, [`sound-gjallarhorn.ps1`](scripts/sound-gjallarhorn.ps1) bumps CPM versions in Yggdrasil after each realm release
 - `.github/workflows/` — six reusable workflows consumed across every realm
 
 ## Carve the laws
@@ -55,7 +55,7 @@ Requires `SCATTER_PAT` — a PAT with `repo` scope set as an org secret. Locally
 | [`release-nuget.yml`](.github/workflows/release-nuget.yml) | Runs `ci-build-test` + CodeQL in parallel, then packs, generates an SBOM, pushes to GitHub Packages, and creates a GitHub Release |
 | [`release-container.yml`](.github/workflows/release-container.yml) | Runs `ci-build-test` + CodeQL in parallel, then publishes migrations/web/worker images to GHCR with Trivy SBOM scans and creates a GitHub Release |
 | [`update-bifrost.yml`](.github/workflows/update-bifrost.yml) | Stamps the calling realm's new SHA into Bifrost's submodule pointer; requires the `bifrost_token` secret |
-| [`phone-home-nuget.yml`](.github/workflows/phone-home-nuget.yml) | Bumps `<{Realm}Version>` in Yggdrasil's `Directory.Packages.props` after a realm release; skips pre-releases |
+| [`sound-gjallarhorn.yml`](.github/workflows/sound-gjallarhorn.yml) | Bumps `<{Realm}Version>` in Yggdrasil's `Directory.Packages.props` after a realm release; skips pre-releases |
 | [`scatter-the-runes.yml`](.github/workflows/scatter-the-runes.yml) | Triggered by pushes to `config/**` — fans updated config to all realms via `scatter-the-runes.ps1` |
 
 Call any `workflow_call` workflow from a realm with:
@@ -65,7 +65,8 @@ jobs:
   ci:
     uses: NorseArchitecture/.github/.github/workflows/ci-build-test.yml@master
     with:
-      minimum_coverage: 80   # optional; org floor is 60%
+      minimum_coverage: 80   # optional; org floor is 0.1% (temporarily lowered until
+                              # the ASP.NET Identity template is out of Yggdrasil)
 ```
 
 ## Soundtrack: Fall Through Ginnungagap
