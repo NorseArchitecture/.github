@@ -61,6 +61,8 @@
 		Ratatoskr    = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
 		Heimdall     = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
 		Himinbjorg   = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+		Mimisbrunnr  = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+		Mimir        = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
 		# Runtime host — universal + dotnet + tests (props only, no 'nuget'); owns its own
 		# src/Directory.Build.targets and tests/Directory.Build.targets (no IsAotCompatible=true,
 		# uses CPM — incompatible with 'nuget' group files. See
