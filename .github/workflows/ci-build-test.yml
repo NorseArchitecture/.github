@@ -31,10 +31,26 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           dotnet-quality: ${{ env.DOTNET_QUALITY }}
 
+      - name: Write coverage settings
+        run: |
+          cat > coverage-settings.xml <<'EOF'
+          <Configuration>
+            <CodeCoverage>
+              <Sources>
+                <Exclude>
+                  <!-- dotnet-ef always nests scaffolded migrations in a literal Migrations/ subfolder,
+                       regardless of the containing project's name -->
+                  <Source>.*[\\/]Migrations[\\/].*</Source>
+                </Exclude>
+              </Sources>
+            </CodeCoverage>
+          </Configuration>
+          EOF
+
       - name: Test
         env:
           NUGET_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
-        run: dotnet test -c Release --coverage --coverage-output-format cobertura --coverage-output coverage.xml
+        run: dotnet test -c Release --coverage --coverage-output-format cobertura --coverage-output coverage.xml --coverage-settings coverage-settings.xml
 
       - name: Install ReportGenerator
         run: dotnet tool install -g dotnet-reportgenerator-globaltool --version 5.*
