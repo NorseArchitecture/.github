@@ -27,7 +27,7 @@ $RulesetName = 'Law of the Æsir'
 # Repos that carry the CI gate (gate / build status check required to merge).
 $GatedRepos = [System.Collections.Generic.HashSet[string]]@(
 	'Asgard', 'Svartalfheim', 'Midgard', 'Yggdrasil', 'Urdarbrunnr',
-	'Ratatoskr', 'Heimdall', 'Himinbjorg'
+	'Ratatoskr', 'Heimdall', 'Himinbjorg', 'Mimisbrunnr', 'Mimir'
 )
 
 # Repos without a build system — gate / build never fires, so status check
