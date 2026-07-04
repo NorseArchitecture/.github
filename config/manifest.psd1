@@ -1,8 +1,10 @@
 # manifest.psd1 — Platform config sync manifest
 #
-# Groups define collections of files; Realms list which groups they receive.
-# Files are deduplicated across groups — a realm assigned 'universal' does not
-# also need 'git' (universal already contains those files).
+# Groups define collections of files. Realm classification is by exception:
+# any repo in the NorseArchitecture org not listed in Exceptions is a default
+# realm — full NuGet-shipping group set, gated CI. Files are deduplicated
+# across groups — a realm assigned 'universal' does not also need 'git'
+# (universal already contains those files).
 
 @{
 	Groups = @{
@@ -52,29 +54,43 @@
 			'.github/workflows/update-bifrost.yml'
 		)
 	}
-	Realms = @{
-		# NuGet-shipping platform realms
-		Svartalfheim = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
-		Asgard       = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
-		Midgard      = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
-		Urdarbrunnr  = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
-		Ratatoskr    = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
-		Heimdall     = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
-		Himinbjorg   = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
-		Mimisbrunnr  = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
-		Mimir        = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+	# Default group set for any repo not named in Exceptions below.
+	DefaultGroups   = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+	# Repos scatter must never sync into — source of the config, not a consumer.
+	ScatterExcludes = @('.github')
+	# Anything NOT listed here is a default realm: ships to NuGet, full group
+	# set, gated CI. Exception entries declare only the fields that differ
+	# from default — an absent field falls back to DefaultGroups / Gated=$true.
+	Exceptions      = @{
 		# Runtime host — universal + dotnet + tests (props only, no 'nuget'); owns its own
 		# src/Directory.Build.targets and tests/Directory.Build.targets (no IsAotCompatible=true,
 		# uses CPM — incompatible with 'nuget' group files. See
 		# ../Bifrost/Glitnir/docs/Platform/specs/2026-07-01-norseref-generator-forwarding-design.md)
-		Yggdrasil    = @('universal', 'sdk', 'dotnet', 'tests', 'ci', 'workflows')
+		Yggdrasil = @{
+			Groups = @('universal', 'sdk', 'dotnet', 'tests', 'ci', 'workflows')
+		}
 		# Aspire composition root — universal only; owns its own global.json
 		# (local msbuild-sdks entry for Microsoft.Build.NoTargets, used by Glitnir's
-		# doc-glob project since Glitnir has no global.json of its own)
-		Bifrost      = @('universal', 'ci')
-		# Design system — no .NET tooling; crafts its own .editorconfig
-		Naglfar      = @('git', 'ci', 'workflows')
-		# Docs and proofs of concept — git hygiene only
-		Glitnir      = @('git', 'ci', 'workflows')
+		# doc-glob project since Glitnir has no global.json of its own). Ungated —
+		# no gate / build CI check exists for an Aspire AppHost.
+		Bifrost   = @{
+			Groups = @('universal', 'ci')
+			Gated  = $false
+		}
+		# Design system — no .NET tooling; crafts its own .editorconfig. Ungated.
+		Naglfar   = @{
+			Groups = @('git', 'ci', 'workflows')
+			Gated  = $false
+		}
+		# Docs and proofs of concept — git hygiene only. Ungated.
+		Glitnir   = @{
+			Groups = @('git', 'ci', 'workflows')
+			Gated  = $false
+		}
+		# Source of the canonical config — scatter excludes it outright (see
+		# ScatterExcludes above); only its Gated classification is relevant here.
+		'.github' = @{
+			Gated = $false
+		}
 	}
 }

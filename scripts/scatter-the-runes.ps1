@@ -2,17 +2,20 @@
 #
 # scatter-the-runes.ps1
 #
-# Fans canonical config files from config/ to every realm in the manifest as
+# Fans canonical config files from config/ to every realm in the org as
 # auto-merge PRs. Idempotent: re-running pushes a new commit onto any existing
 # sync/platform-config branch, updating open PRs without creating duplicates.
 #
+# Realm discovery is live (gh repo list) and classification is by exception —
+# see config/manifest.psd1. Onboarding a new default realm needs no edits here.
+#
 # Requirements:
-#   GH_TOKEN — PAT with repo scope (set in CI via SCATTER_PAT secret;
+#   GH_TOKEN — PAT with repo scope + read:org (set in CI via SCATTER_PAT secret;
 #              locally via `gh auth login` or env var)
 #   git user.name and user.email configured (the workflow step sets these)
 #
 # Usage:
-#   pwsh scripts/scatter-the-runes.ps1                  # all realms
+#   pwsh scripts/scatter-the-runes.ps1                  # all discovered realms
 #   pwsh scripts/scatter-the-runes.ps1 Svartalfheim     # one realm
 #   pwsh scripts/scatter-the-runes.ps1 -DryRun          # print plan, no writes
 
@@ -29,11 +32,13 @@ $Branch    = 'sync/platform-config'
 $ConfigDir = Join-Path $PSScriptRoot '../config'
 $Manifest  = Import-PowerShellDataFile (Join-Path $ConfigDir 'manifest.psd1')
 
+. (Join-Path $PSScriptRoot 'lib/realm-classification.ps1')
+
 function Get-RealmFiles {
 	param([string]$RealmName)
 	$Files = [System.Collections.Generic.SortedSet[string]]::new(
 		[System.StringComparer]::OrdinalIgnoreCase)
-	foreach ($GroupName in $Manifest.Realms[$RealmName]) {
+	foreach ($GroupName in (Get-RealmGroups $Manifest $RealmName)) {
 		foreach ($File in $Manifest.Groups[$GroupName]) {
 			[void]$Files.Add($File)
 		}
@@ -41,17 +46,28 @@ function Get-RealmFiles {
 	@($Files)
 }
 
-$TargetRealms = if ($Realms) { $Realms } else { $Manifest.Realms.Keys | Sort-Object }
-$Failures     = @()
+$DiscoveredRepos = Get-OrgRepos $Org
+
+if ($Realms) {
+	$UnknownRealms = $Realms | Where-Object { $_ -notin $DiscoveredRepos }
+	foreach ($Unknown in $UnknownRealms) {
+		Write-Warning "==> $Unknown not found in $Org — skipping"
+	}
+	$ExcludedRealms = $Realms | Where-Object { $_ -in $Manifest.ScatterExcludes }
+	foreach ($Excluded in $ExcludedRealms) {
+		Write-Warning "==> $Excluded is in ScatterExcludes — skipping"
+	}
+	$TargetRealms = $Realms | Where-Object { $_ -in $DiscoveredRepos -and $_ -notin $Manifest.ScatterExcludes }
+} else {
+	$TargetRealms = $DiscoveredRepos | Where-Object { $_ -notin $Manifest.ScatterExcludes } | Sort-Object
+}
+
+$Failures = @()
 
 foreach ($Realm in $TargetRealms) {
-	if (-not $Manifest.Realms.ContainsKey($Realm)) {
-		Write-Warning "==> $Realm not in manifest — skipping"
-		continue
-	}
-
-	$Files = Get-RealmFiles $Realm
-	Write-Host "==> $Org/$Realm ($($Files.Count) files)"
+	$Files          = Get-RealmFiles $Realm
+	$Classification = if ($Manifest.Exceptions.ContainsKey($Realm)) { 'exception' } else { 'default' }
+	Write-Host "==> $Org/$Realm ($Classification, $($Files.Count) files)"
 
 	if ($DryRun) {
 		Write-Host "    [DRY RUN] Would sync: $($Files -join ', ')"
