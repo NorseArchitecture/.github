@@ -6,12 +6,16 @@
 # Norse Architecture organization. Idempotent: if a ruleset with the same
 # name already exists on a repo, it is updated in place; otherwise created.
 #
+# Repo discovery is live (gh repo list) and gate classification is by
+# exception — see config/manifest.psd1. Onboarding a new default (gated)
+# realm needs no edits here.
+#
 # Requirements:
-#   - gh CLI authenticated with an account that has admin on the repos
-#     (gh auth status to verify; needs "repo" scope / admin:org not required)
+#   - gh CLI authenticated with an account that has admin on the repos,
+#     plus read:org (gh auth status to verify)
 #
 # Usage:
-#   ./carve-the-laws.ps1           # apply to all repos listed below
+#   ./carve-the-laws.ps1           # apply to all discovered repos
 #   ./carve-the-laws.ps1 Asgard    # apply to a single repo
 #
 param(
@@ -23,24 +27,21 @@ $ErrorActionPreference = 'Stop'
 
 $Org         = 'NorseArchitecture'
 $RulesetName = 'Law of the Æsir'
+$ConfigDir   = Join-Path $PSScriptRoot '../config'
+$Manifest    = Import-PowerShellDataFile (Join-Path $ConfigDir 'manifest.psd1')
 
-# Repos that carry the CI gate (gate / build status check required to merge).
-$GatedRepos = [System.Collections.Generic.HashSet[string]]@(
-	'Asgard', 'Svartalfheim', 'Midgard', 'Yggdrasil', 'Urdarbrunnr',
-	'Ratatoskr', 'Heimdall', 'Himinbjorg', 'Mimisbrunnr', 'Mimir'
-)
+. (Join-Path $PSScriptRoot 'lib/realm-classification.ps1')
 
-# Repos without a build system — gate / build never fires, so status check
-# is omitted. Enforcement will be tightened per-repo as CI policies are defined
-# (e.g. required_approving_review_count >= 1 until a real gate exists).
-$UngatedRepos = [System.Collections.Generic.HashSet[string]]@(
-	'.github', 'Bifrost', 'Naglfar', 'Glitnir'
-)
+$DiscoveredRepos = Get-OrgRepos $Org
 
-$AllRepos = @($GatedRepos) + @($UngatedRepos) | Sort-Object
-
-if (-not $Repos -or $Repos.Count -eq 0) {
-	$Repos = $AllRepos
+if ($Repos) {
+	$UnknownRepos = $Repos | Where-Object { $_ -notin $DiscoveredRepos }
+	foreach ($Unknown in $UnknownRepos) {
+		Write-Warning "==> $Unknown not found in $Org — skipping"
+	}
+	$Repos = $Repos | Where-Object { $_ -in $DiscoveredRepos }
+} else {
+	$Repos = $DiscoveredRepos | Sort-Object
 }
 
 # ---------------------------------------------------------------------------
@@ -121,13 +122,9 @@ $Failures = @()
 foreach ($Repo in $Repos) {
 	Write-Host "==> $Org/$Repo"
 
-	if (-not $GatedRepos.Contains($Repo) -and -not $UngatedRepos.Contains($Repo)) {
-		Write-Warning "    $Repo not in gated or ungated list — skipping"
-		continue
-	}
-
-	$Ruleset = New-Ruleset -Gated $GatedRepos.Contains($Repo)
-	$Gate    = if ($GatedRepos.Contains($Repo)) { 'gated' } else { 'ungated' }
+	$Gated   = Get-RealmGated $Manifest $Repo
+	$Ruleset = New-Ruleset -Gated $Gated
+	$Gate    = if ($Gated) { 'gated' } else { 'ungated' }
 
 	# Repo settings — idempotent PATCH; safe to run repeatedly.
 	Write-Host "    Applying repo settings ($Gate)..."
