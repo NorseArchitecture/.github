@@ -53,7 +53,11 @@ if ($Realms) {
 	foreach ($Unknown in $UnknownRealms) {
 		Write-Warning "==> $Unknown not found in $Org — skipping"
 	}
-	$TargetRealms = $Realms | Where-Object { $_ -in $DiscoveredRepos }
+	$ExcludedRealms = $Realms | Where-Object { $_ -in $Manifest.ScatterExcludes }
+	foreach ($Excluded in $ExcludedRealms) {
+		Write-Warning "==> $Excluded is in ScatterExcludes — skipping"
+	}
+	$TargetRealms = $Realms | Where-Object { $_ -in $DiscoveredRepos -and $_ -notin $Manifest.ScatterExcludes }
 } else {
 	$TargetRealms = $DiscoveredRepos | Where-Object { $_ -notin $Manifest.ScatterExcludes } | Sort-Object
 }
