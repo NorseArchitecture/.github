@@ -53,9 +53,16 @@
 		workflows   = @(
 			'.github/workflows/update-bifrost.yml'
 		)
+		# Claude Code submodule guard — every realm except Bifrost (the valid session
+		# root, which owns its own permissions+deny .claude/settings.json by hand) and
+		# .github (source, already covered by ScatterExcludes). Blocks a session started
+		# inside the submodule and redirects to Bifrost — see CLAUDE.md §1.
+		claude      = @(
+			'.claude/settings.json'
+		)
 	}
 	# Default group set for any repo not named in Exceptions below.
-	DefaultGroups   = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows')
+	DefaultGroups   = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows', 'claude')
 	# Repos scatter must never sync into — source of the config, not a consumer.
 	ScatterExcludes = @('.github')
 	# Anything NOT listed here is a default realm: ships to NuGet, full group
@@ -67,24 +74,26 @@
 		# uses CPM — incompatible with 'nuget' group files. See
 		# ../Bifrost/Glitnir/docs/Platform/specs/2026-07-01-norseref-generator-forwarding-design.md)
 		Yggdrasil = @{
-			Groups = @('universal', 'sdk', 'dotnet', 'tests', 'ci', 'workflows')
+			Groups = @('universal', 'sdk', 'dotnet', 'tests', 'ci', 'workflows', 'claude')
 		}
 		# Aspire composition root — universal only; owns its own global.json
 		# (local msbuild-sdks entry for Microsoft.Build.NoTargets, used by Glitnir's
 		# doc-glob project since Glitnir has no global.json of its own). Ungated —
-		# no gate / build CI check exists for an Aspire AppHost.
+		# no gate / build CI check exists for an Aspire AppHost. No 'claude' group —
+		# Bifrost is the valid session root and hand-owns its own permissions+deny
+		# .claude/settings.json, not the submodule guard hook.
 		Bifrost   = @{
 			Groups = @('universal', 'ci')
 			Gated  = $false
 		}
 		# Design system — no .NET tooling; crafts its own .editorconfig. Ungated.
 		Naglfar   = @{
-			Groups = @('git', 'ci', 'workflows')
+			Groups = @('git', 'ci', 'workflows', 'claude')
 			Gated  = $false
 		}
 		# Docs and proofs of concept — git hygiene only. Ungated.
 		Glitnir   = @{
-			Groups = @('git', 'ci', 'workflows')
+			Groups = @('git', 'ci', 'workflows', 'claude')
 			Gated  = $false
 		}
 		# Source of the canonical config — scatter excludes it outright (see
