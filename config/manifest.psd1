@@ -86,11 +86,22 @@
 			Groups = @('universal', 'ci')
 			Gated  = $false
 		}
-		# Design system — token pipeline (JS/Style Dictionary) + DesignSystem.Stories
-		# (BlazingStory host, .NET, consumes Abstractions.Components et al. via NorseRef).
-		# Ungated: little unit-testable logic lives in this repo directly — Asgard's
-		# components are already gated in their own repo. Revisit if that changes.
+		# Design system — token pipeline only (JS/Style Dictionary, @norsearchitecture/design-tokens).
+		# npm-only, no .NET at all as of 2026-07-12 — DesignSystem.Stories split out to Bragi the
+		# same day it landed here. No 'sdk'/'dotnet'/'nuget'/'tests' groups: nothing here restores a
+		# .NET SDK or resolves NorseRef. ci.yml (hand-authored, not scattered) already calls
+		# ci-build-test-npm.yml, not the dotnet gate. Ungated.
 		Naglfar   = @{
+			Groups = @('universal', 'ci', 'workflows', 'claude')
+			Gated  = $false
+		}
+		# Design system — story content only: DesignSystem.Stories, a content-only Razor Class
+		# Library (.stories.razor, .NET, consumes Abstractions.Components et al. via NorseRef).
+		# Split out of Naglfar 2026-07-12 — see ../Bifrost/Glitnir/docs/Platform/specs/2026-07-12-
+		# designsystem-stories-hosting-design.md (addendum records the split). Ungated: little
+		# unit-testable logic lives in this repo directly — Asgard's components are already gated
+		# in their own repo. Revisit if that changes.
+		Bragi     = @{
 			Groups = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows', 'claude')
 			Gated  = $false
 		}
