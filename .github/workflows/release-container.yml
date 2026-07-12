@@ -150,6 +150,30 @@ jobs:
             ghcr.io/norsearchitecture/hosting/worker:${{ steps.version.outputs.value }}
           docker push ghcr.io/norsearchitecture/hosting/worker:${{ steps.version.outputs.value }}
 
+      # ── stories ─────────────────────────────────────────────────────────────
+
+      - name: Publish stories image (local daemon)
+        run: |
+          dotnet publish src/Hosting.Stories.Server/Hosting.Stories.Server.csproj \
+            --os linux --arch x64 -c Release /t:PublishContainer \
+            /p:ContainerRepository=norsearchitecture/hosting/stories \
+            /p:ContainerImageTag=${{ steps.version.outputs.value }}
+
+      - name: Scan stories image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: norsearchitecture/hosting/stories:${{ steps.version.outputs.value }}
+          format: cyclonedx
+          output: sbom-stories.cdx.json
+          exit-code: '1'
+          severity: HIGH,CRITICAL
+
+      - name: Push stories image
+        run: |
+          docker tag norsearchitecture/hosting/stories:${{ steps.version.outputs.value }} \
+            ghcr.io/norsearchitecture/hosting/stories:${{ steps.version.outputs.value }}
+          docker push ghcr.io/norsearchitecture/hosting/stories:${{ steps.version.outputs.value }}
+
       # ── release ─────────────────────────────────────────────────────────────
 
       - name: Create GitHub Release
@@ -160,6 +184,7 @@ jobs:
             sbom-migrations.cdx.json \
             sbom-web.cdx.json \
             sbom-worker.cdx.json \
+            sbom-stories.cdx.json \
             --generate-notes
 
   deploy-hook:
