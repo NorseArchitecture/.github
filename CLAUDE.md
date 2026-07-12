@@ -68,7 +68,7 @@ Dependency order (each layer rides only on the ones above it):
 5. **Ratatoskr** — `Norse.NServiceBus.*`: NServiceBus endpoint configuration, saga infrastructure, message conventions, and transport wiring.
 6. **Yggdrasil** — `Norse.Hosting.*`: web/worker/migration service chassis.
 7. **Himinbjörg** — `Norse.Identity.*`: backend-only EF persistence for ASP.NET Identity/OpenIddict — never crosses to WASM or MAUI.
-8. **Heimdall** — `Norse.Access.*`: auth services on top of Himinbjörg, uniform across Blazor Server/WASM/MAUI.
+8. **Heimdall** — `Norse.AuthN.*`: the authn story on top of Himinbjörg — login, register, forgot-password, 2FA setup, recovery, and reset — uniform across Blazor Server/WASM/MAUI.
 9. **Bifröst** — `Norse.Orchestration.*`: .NET Aspire composition layer wiring services, databases, queues, config into a running platform.
 10. **Naglfar** — `Norse.DesignSystem.*`: design tokens, spacing scale, radii, typography, and component primitives. Standalone — no substrate dependencies. Purpose-built to be superseded when the product vision is realized.
 11. **Glitnir** — the design court: specs, plans, and proof-of-concept verdicts. Specs are argued to convergence here *before* any of the above renders code.
