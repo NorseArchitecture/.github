@@ -86,9 +86,12 @@
 			Groups = @('universal', 'ci')
 			Gated  = $false
 		}
-		# Design system — no .NET tooling; crafts its own .editorconfig. Ungated.
+		# Design system — token pipeline (JS/Style Dictionary) + DesignSystem.Stories
+		# (BlazingStory host, .NET, consumes Abstractions.Components et al. via NorseRef).
+		# Ungated: little unit-testable logic lives in this repo directly — Asgard's
+		# components are already gated in their own repo. Revisit if that changes.
 		Naglfar   = @{
-			Groups = @('git', 'ci', 'workflows', 'claude')
+			Groups = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows', 'claude')
 			Gated  = $false
 		}
 		# Docs and proofs of concept — git hygiene only. Ungated.
