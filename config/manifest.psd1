@@ -34,12 +34,12 @@
 		# lives here too (not in 'tests' below): same audience as src/Directory.Build.targets for
 		# the same reason — both exist solely to resolve NorseRef (and now the generator-analyzer
 		# strip target) via Bifrost's root Directory.Build.targets, which only matters for realms
-		# that ship and consume NuGet packages across the platform.
+		# that ship and consume NuGet packages across the platform. The canonical release.yml
+		# itself lives in the separate 'release' group below, not here — see that group's comment.
 		nuget       = @(
 			'src/Directory.Build.props'
 			'src/Directory.Build.targets'
 			'tests/Directory.Build.targets'
-			'.github/workflows/release.yml'
 		)
 		# Test project MSBuild props — repos with a .NET build and tests
 		tests       = @(
@@ -48,6 +48,14 @@
 		# CI workflows — all realms including Bifrost
 		ci          = @(
 			'.github/workflows/auto-approve.yml'
+		)
+		# The canonical single-target (NuGet-only) release workflow — split out of 'nuget' above
+		# 2026-07-12 so a realm can keep every other NuGet-packaging file scattered normally while
+		# opting out of just this one. Naglfar is the first case: it dual-publishes npm and NuGet
+		# from one release.yml (a version-sync gate plus two parallel publish jobs), which the
+		# canonical single-target template would silently clobber on the next scatter run.
+		release     = @(
+			'.github/workflows/release.yml'
 		)
 		# Platform workflows — all realms except Bifrost (update-bifrost must not run in Bifrost)
 		workflows   = @(
@@ -62,7 +70,7 @@
 		)
 	}
 	# Default group set for any repo not named in Exceptions below.
-	DefaultGroups   = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows', 'claude')
+	DefaultGroups   = @('universal', 'sdk', 'dotnet', 'nuget', 'release', 'tests', 'ci', 'workflows', 'claude')
 	# Repos scatter must never sync into — source of the config, not a consumer.
 	ScatterExcludes = @('.github')
 	# Anything NOT listed here is a default realm: ships to NuGet, full group
@@ -91,8 +99,11 @@
 		# alongside @norsearchitecture/design-tokens in the same release step. "npm-only, no .NET"
 		# narrows to "no hand-authored C#" as of 2026-07-12 (Theme Selection Machinery addendum,
 		# ../Bifrost/Glitnir/docs/Platform/specs/2026-07-11-blazor-component-architecture-design.md).
-		# Ungated: nothing here is unit-testable logic — it's 100% generated output, verified by
-		# Naglfar's existing test/build.test.js against the generated files directly.
+		# No 'release' group: Naglfar's release.yml dual-publishes npm and NuGet from one file
+		# (a version-sync gate plus two parallel publish jobs) — permanently bespoke, not the
+		# canonical single-target template every other 'nuget'-shipping realm scatters unmodified.
+		# Ungated for now — real dotnet-test coverage exists as of 2026-07-12
+		# (tests/DesignSystem.Tokens.Tests), unlike when this was first written; revisit Gated.
 		Naglfar   = @{
 			Groups = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows', 'claude')
 			Gated  = $false
