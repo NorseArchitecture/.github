@@ -6,6 +6,11 @@ name: Publish Container
 #
 # ci and codeql are no longer called from inside this workflow — see the same
 # comment in publish-nuget.yml for why.
+#
+# The four images build/scan/push in parallel via a matrix, not sequentially in
+# one job — wall-clock over runner-minutes is the deliberate trade here. Each
+# matrix leg uploads its own artifact bundle (container-<name>-artifacts), which
+# still matches create-release.yml's `*-artifacts` download pattern unchanged.
 
 on:
   workflow_call:
@@ -20,6 +25,21 @@ env:
 jobs:
   publish-container:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: migrations
+            project: src/Hosting.Migrations.Service/Hosting.Migrations.Service.csproj
+            repository: norsearchitecture/hosting/migrations
+          - name: web
+            project: src/Hosting.Web.Server/Hosting.Web.Server.csproj
+            repository: norsearchitecture/hosting/web
+          - name: worker
+            project: src/Hosting.Worker/Hosting.Worker.csproj
+            repository: norsearchitecture/hosting/worker
+          - name: stories
+            project: src/Hosting.Stories.Server/Hosting.Stories.Server.csproj
+            repository: norsearchitecture/hosting/stories
     env:
       NUGET_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
     steps:
@@ -43,111 +63,31 @@ jobs:
         id: version
         run: echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
-      # ── migrations ──────────────────────────────────────────────────────────
-
-      - name: Publish migrations image (local daemon)
+      - name: Publish ${{ matrix.name }} image (local daemon)
         run: |
-          dotnet publish src/Hosting.Migrations.Service/Hosting.Migrations.Service.csproj \
+          dotnet publish ${{ matrix.project }} \
             --os linux --arch x64 -c Release /t:PublishContainer \
-            /p:ContainerRepository=norsearchitecture/hosting/migrations \
+            /p:ContainerRepository=${{ matrix.repository }} \
             /p:ContainerImageTag=${{ steps.version.outputs.value }}
 
-      - name: Scan migrations image
+      - name: Scan ${{ matrix.name }} image
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: norsearchitecture/hosting/migrations:${{ steps.version.outputs.value }}
+          image-ref: ${{ matrix.repository }}:${{ steps.version.outputs.value }}
           format: cyclonedx
-          output: sbom-migrations.cdx.json
+          output: sbom-${{ matrix.name }}.cdx.json
           exit-code: '1'
           severity: HIGH,CRITICAL
 
-      - name: Push migrations image
+      - name: Push ${{ matrix.name }} image
         run: |
-          docker tag norsearchitecture/hosting/migrations:${{ steps.version.outputs.value }} \
-            ghcr.io/norsearchitecture/hosting/migrations:${{ steps.version.outputs.value }}
-          docker push ghcr.io/norsearchitecture/hosting/migrations:${{ steps.version.outputs.value }}
-
-      # ── web ─────────────────────────────────────────────────────────────────
-
-      - name: Publish web image (local daemon)
-        run: |
-          dotnet publish src/Hosting.Web.Server/Hosting.Web.Server.csproj \
-            --os linux --arch x64 -c Release /t:PublishContainer \
-            /p:ContainerRepository=norsearchitecture/hosting/web \
-            /p:ContainerImageTag=${{ steps.version.outputs.value }}
-
-      - name: Scan web image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: norsearchitecture/hosting/web:${{ steps.version.outputs.value }}
-          format: cyclonedx
-          output: sbom-web.cdx.json
-          exit-code: '1'
-          severity: HIGH,CRITICAL
-
-      - name: Push web image
-        run: |
-          docker tag norsearchitecture/hosting/web:${{ steps.version.outputs.value }} \
-            ghcr.io/norsearchitecture/hosting/web:${{ steps.version.outputs.value }}
-          docker push ghcr.io/norsearchitecture/hosting/web:${{ steps.version.outputs.value }}
-
-      # ── worker ──────────────────────────────────────────────────────────────
-
-      - name: Publish worker image (local daemon)
-        run: |
-          dotnet publish src/Hosting.Worker/Hosting.Worker.csproj \
-            --os linux --arch x64 -c Release /t:PublishContainer \
-            /p:ContainerRepository=norsearchitecture/hosting/worker \
-            /p:ContainerImageTag=${{ steps.version.outputs.value }}
-
-      - name: Scan worker image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: norsearchitecture/hosting/worker:${{ steps.version.outputs.value }}
-          format: cyclonedx
-          output: sbom-worker.cdx.json
-          exit-code: '1'
-          severity: HIGH,CRITICAL
-
-      - name: Push worker image
-        run: |
-          docker tag norsearchitecture/hosting/worker:${{ steps.version.outputs.value }} \
-            ghcr.io/norsearchitecture/hosting/worker:${{ steps.version.outputs.value }}
-          docker push ghcr.io/norsearchitecture/hosting/worker:${{ steps.version.outputs.value }}
-
-      # ── stories ─────────────────────────────────────────────────────────────
-
-      - name: Publish stories image (local daemon)
-        run: |
-          dotnet publish src/Hosting.Stories.Server/Hosting.Stories.Server.csproj \
-            --os linux --arch x64 -c Release /t:PublishContainer \
-            /p:ContainerRepository=norsearchitecture/hosting/stories \
-            /p:ContainerImageTag=${{ steps.version.outputs.value }}
-
-      - name: Scan stories image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: norsearchitecture/hosting/stories:${{ steps.version.outputs.value }}
-          format: cyclonedx
-          output: sbom-stories.cdx.json
-          exit-code: '1'
-          severity: HIGH,CRITICAL
-
-      - name: Push stories image
-        run: |
-          docker tag norsearchitecture/hosting/stories:${{ steps.version.outputs.value }} \
-            ghcr.io/norsearchitecture/hosting/stories:${{ steps.version.outputs.value }}
-          docker push ghcr.io/norsearchitecture/hosting/stories:${{ steps.version.outputs.value }}
-
-      # ── artifacts ───────────────────────────────────────────────────────────
+          docker tag ${{ matrix.repository }}:${{ steps.version.outputs.value }} \
+            ghcr.io/${{ matrix.repository }}:${{ steps.version.outputs.value }}
+          docker push ghcr.io/${{ matrix.repository }}:${{ steps.version.outputs.value }}
 
       - name: Upload release assets
         uses: actions/upload-artifact@v7
         with:
-          name: container-artifacts
-          path: |
-            sbom-migrations.cdx.json
-            sbom-web.cdx.json
-            sbom-worker.cdx.json
-            sbom-stories.cdx.json
+          name: container-${{ matrix.name }}-artifacts
+          path: sbom-${{ matrix.name }}.cdx.json
           retention-days: 7
