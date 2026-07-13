@@ -86,13 +86,15 @@
 			Groups = @('universal', 'ci')
 			Gated  = $false
 		}
-		# Design system — token pipeline only (JS/Style Dictionary, @norsearchitecture/design-tokens).
-		# npm-only, no .NET at all as of 2026-07-12 — DesignSystem.Stories split out to Bragi the
-		# same day it landed here. No 'sdk'/'dotnet'/'nuget'/'tests' groups: nothing here restores a
-		# .NET SDK or resolves NorseRef. ci.yml (hand-authored, not scattered) already calls
-		# ci-build-test-npm.yml, not the dotnet gate. Ungated.
+		# Design system — token pipeline (JS/Style Dictionary) plus DesignSystem.Tokens, a single
+		# 100%-generated .NET package (FluentTokenSeed.g.cs + norse-design-tokens.css) packed
+		# alongside @norsearchitecture/design-tokens in the same release step. "npm-only, no .NET"
+		# narrows to "no hand-authored C#" as of 2026-07-12 (Theme Selection Machinery addendum,
+		# ../Bifrost/Glitnir/docs/Platform/specs/2026-07-11-blazor-component-architecture-design.md).
+		# Ungated: nothing here is unit-testable logic — it's 100% generated output, verified by
+		# Naglfar's existing test/build.test.js against the generated files directly.
 		Naglfar   = @{
-			Groups = @('universal', 'ci', 'workflows', 'claude')
+			Groups = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows', 'claude')
 			Gated  = $false
 		}
 		# Design system — story content only: DesignSystem.Stories, a content-only Razor Class
