@@ -1,0 +1,61 @@
+name: CodeQL
+
+# Setup steps (checkout, .NET/Node, restore) are intentionally inline.
+# Composite actions cannot be called from within a reusable workflow — the runner
+# checks out the CALLER's repository, so any ./ path resolves there, not here.
+
+on:
+  workflow_call:
+    inputs:
+      language:
+        description: 'CodeQL language to analyze (csharp, javascript-typescript)'
+        type: string
+        required: true
+
+permissions:
+  security-events: write
+  contents: read
+
+env:
+  DOTNET_VERSION: "11.0.x"
+  DOTNET_QUALITY: "preview"
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        if: inputs.language == 'csharp'
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-quality: ${{ env.DOTNET_QUALITY }}
+
+      - name: Setup Node
+        if: inputs.language == 'javascript-typescript'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ inputs.language }}
+
+      - name: Restore and build (csharp)
+        if: inputs.language == 'csharp'
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
+        run: |
+          dotnet restore
+          dotnet build -c Release
+
+      - name: Install dependencies (javascript-typescript)
+        if: inputs.language == 'javascript-typescript'
+        run: npm ci
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4

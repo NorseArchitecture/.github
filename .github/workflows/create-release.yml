@@ -1,0 +1,30 @@
+name: Create Release
+
+# This workflow needs no checkout: gh release create talks to the GitHub API directly
+# once given --repo, and every file it attaches comes from downloaded publish artifacts.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all publish artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-artifacts'
+          path: ./release-assets
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            ./release-assets/* \
+            --generate-notes

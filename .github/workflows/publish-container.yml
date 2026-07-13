@@ -1,59 +1,24 @@
-name: Container Release
+name: Publish Container
 
 # Setup steps (checkout, .NET, NuGet source) are intentionally inline.
 # Composite actions cannot be called from within a reusable workflow — the runner
 # checks out the CALLER's repository, so any ./ path resolves there, not here.
+#
+# ci and codeql are no longer called from inside this workflow — see the same
+# comment in publish-nuget.yml for why.
 
 on:
   workflow_call:
 
 permissions:
-  contents: write
   packages: write
-  pull-requests: write
-  security-events: write
 
 env:
   DOTNET_VERSION: "11.0.x"
   DOTNET_QUALITY: "preview"
 
 jobs:
-  ci:
-    uses: ./.github/workflows/ci-build-test.yml
-    secrets: inherit
-
-  codeql:
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-          dotnet-quality: ${{ env.DOTNET_QUALITY }}
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
-        with:
-          languages: csharp
-
-      - name: Build
-        env:
-          NUGET_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
-        run: |
-          dotnet restore
-          dotnet build -c Release
-
-      - name: Analyze
-        uses: github/codeql-action/analyze@v4
-
-  package:
-    needs: [ci, codeql]
+  publish-container:
     runs-on: ubuntu-latest
     env:
       NUGET_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
@@ -174,29 +139,15 @@ jobs:
             ghcr.io/norsearchitecture/hosting/stories:${{ steps.version.outputs.value }}
           docker push ghcr.io/norsearchitecture/hosting/stories:${{ steps.version.outputs.value }}
 
-      # ── release ─────────────────────────────────────────────────────────────
+      # ── artifacts ───────────────────────────────────────────────────────────
 
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create "${{ github.ref_name }}" \
-            sbom-migrations.cdx.json \
-            sbom-web.cdx.json \
-            sbom-worker.cdx.json \
-            sbom-stories.cdx.json \
-            --generate-notes
-
-  deploy-hook:
-    needs: [package]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to feature environment
-        if: ${{ contains(github.ref_name, '-') }}
-        run: |
-          echo "Pre-release ${{ github.ref_name }} — deploy hook target: feature environment (not yet implemented)"
-
-      - name: Deploy to dev/integration
-        if: ${{ !contains(github.ref_name, '-') }}
-        run: |
-          echo "Stable ${{ github.ref_name }} — deploy hook target: dev/integration environment (not yet implemented)"
+      - name: Upload release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-artifacts
+          path: |
+            sbom-migrations.cdx.json
+            sbom-web.cdx.json
+            sbom-worker.cdx.json
+            sbom-stories.cdx.json
+          retention-days: 7

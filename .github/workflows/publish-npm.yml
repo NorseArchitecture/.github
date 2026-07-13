@@ -1,20 +1,16 @@
-name: npm Release
+name: Publish npm
+
+# build-test and codeql are no longer called from inside this workflow — see the
+# same comment in publish-nuget.yml for why.
 
 on:
   workflow_call:
 
 permissions:
-  contents: write
   packages: write
-  pull-requests: write
 
 jobs:
-  build-test:
-    uses: ./.github/workflows/ci-build-test-npm.yml
-    secrets: inherit
-
-  pack-and-publish:
-    needs: [build-test]
+  publish-npm:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -58,11 +54,11 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create "${{ github.ref_name }}" \
-            ./*.tgz \
-            ./sbom.cyclonedx.json \
-            --generate-notes
+      - name: Upload release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-artifacts
+          path: |
+            ./*.tgz
+            ./sbom.cyclonedx.json
+          retention-days: 7

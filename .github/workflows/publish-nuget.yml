@@ -1,0 +1,56 @@
+name: Publish NuGet
+
+# Setup steps (checkout, .NET, NuGet source, restore) are intentionally inline.
+# Composite actions cannot be called from within a reusable workflow — the runner
+# checks out the CALLER's repository, so any ./ path resolves there, not here.
+#
+# build-test and codeql are no longer called from inside this workflow — the caller's
+# release.yml runs them once and gates every publish-* job on them via needs:, so a
+# multi-target realm (Naglfar) doesn't pay for two redundant build-test/codeql runs.
+
+on:
+  workflow_call:
+
+permissions:
+  packages: write
+
+env:
+  DOTNET_VERSION: "11.0.x"
+  DOTNET_QUALITY: "preview"
+
+jobs:
+  publish-nuget:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-quality: ${{ env.DOTNET_QUALITY }}
+
+      - name: Pack
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
+        run: dotnet pack -c Release -o ./artifacts/nupkg
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.cyclonedx.json
+
+      - name: Push to GitHub Packages
+        run: dotnet nuget push "./artifacts/nupkg/*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source "https://nuget.pkg.github.com/NorseArchitecture/index.json" --skip-duplicate
+
+      - name: Upload release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-artifacts
+          path: |
+            ./artifacts/nupkg/*.nupkg
+            ./sbom.cyclonedx.json
+          retention-days: 7
