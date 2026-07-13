@@ -49,13 +49,19 @@ Requires `SCATTER_PAT` — a PAT with `repo` scope set as an org secret. Locally
 
 ## Reusable workflows
 
+A tag push (`v*.*.*`) is the sole release inception point. Each realm's own `release.yml` runs `build-test` + one `codeql` call per language it has, gates one or more `publish-*` jobs on those, then fans in to a single `create-release` job — so a realm shipping to more than one target (e.g. Naglfar's npm + NuGet) never races two jobs both trying to create the same GitHub Release. `publish-*` workflows are publish-only: they pack/push/scan and upload their output as an artifact bundle named `<target>-artifacts`; `create-release.yml` downloads every bundle matching that pattern and creates the release in one shot, whatever the bundle count.
+
 | Workflow | Purpose |
 |----------|---------|
 | [`ci-build-test.yml`](.github/workflows/ci-build-test.yml) | Restore → build → test → Cobertura coverage → PR comment → enforce branch-coverage threshold |
-| [`release-nuget.yml`](.github/workflows/release-nuget.yml) | Runs `ci-build-test` + CodeQL in parallel, then packs, generates an SBOM, pushes to GitHub Packages, and creates a GitHub Release |
-| [`release-container.yml`](.github/workflows/release-container.yml) | Runs `ci-build-test` + CodeQL in parallel, then publishes migrations/web/worker images to GHCR with Trivy SBOM scans and creates a GitHub Release |
+| [`ci-build-test-npm.yml`](.github/workflows/ci-build-test-npm.yml) | Checkout → Node setup → install → build → test — the npm-realm equivalent of `ci-build-test.yml` |
+| [`codeql.yml`](.github/workflows/codeql.yml) | Language-parameterized CodeQL scan (`csharp` or `javascript-typescript`); a realm calls it once per language it actually has |
+| [`publish-nuget.yml`](.github/workflows/publish-nuget.yml) | Packs, generates an SBOM, pushes to GitHub Packages, uploads `nuget-artifacts` — publish-only, no release creation |
+| [`publish-npm.yml`](.github/workflows/publish-npm.yml) | Packs, generates an SBOM, publishes to GitHub Packages, uploads `npm-artifacts` — publish-only, no release creation |
+| [`publish-container.yml`](.github/workflows/publish-container.yml) | Builds, Trivy-scans, and pushes all four Yggdrasil images to GHCR in parallel (matrix), uploads `container-<name>-artifacts` — publish-only, no release creation |
+| [`create-release.yml`](.github/workflows/create-release.yml) | Downloads every `*-artifacts` bundle a realm's publish jobs produced and creates exactly one GitHub Release |
 | [`update-bifrost.yml`](.github/workflows/update-bifrost.yml) | Stamps the calling realm's new SHA into Bifrost's submodule pointer; requires the `bifrost_token` secret |
-| [`sound-gjallarhorn.yml`](.github/workflows/sound-gjallarhorn.yml) | Bumps `<{Realm}Version>` in Yggdrasil's `Directory.Packages.props` after a realm release; skips pre-releases |
+| [`sound-gjallarhorn.yml`](.github/workflows/sound-gjallarhorn.yml) | Bumps `<{Realm}Version>` in Yggdrasil's `Directory.Packages.props` once a realm's NuGet package is live; skips pre-releases |
 | [`scatter-the-runes.yml`](.github/workflows/scatter-the-runes.yml) | Triggered by pushes to `config/**` — fans updated config to all realms via `scatter-the-runes.ps1` |
 
 Call any `workflow_call` workflow from a realm with:
