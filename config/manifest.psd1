@@ -114,8 +114,14 @@
 		# designsystem-stories-hosting-design.md (addendum records the split). Ungated: little
 		# unit-testable logic lives in this repo directly — Asgard's components are already gated
 		# in their own repo. Revisit if that changes.
+		#
+		# Unlike Naglfar, Bragi ships plain NuGet only (no npm dual-publish) — it gets the
+		# canonical 'release' group like any other single-target realm. It was carved out of
+		# Naglfar's Exceptions entry the same day 'release' was split out of 'nuget' and the
+		# omission rode along by copy-paste; without it scatter never overwrote whatever
+		# release.yml Bragi was left with post-split, and it went stale (2026-07-15).
 		Bragi     = @{
-			Groups = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows', 'claude')
+			Groups = @('universal', 'sdk', 'dotnet', 'nuget', 'release', 'tests', 'ci', 'workflows', 'claude')
 			Gated  = $false
 		}
 		# Docs and proofs of concept — git hygiene only. Ungated.
