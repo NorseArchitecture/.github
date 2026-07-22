@@ -12,7 +12,7 @@ There is no build/lint/test pipeline *for this repo's own content* — no `.edit
 
 ### Org secrets
 
-**`BIFROST_TOKEN`** — fine-grained PAT scoped to `NorseArchitecture/Bifrost` with `Contents: write`. Used by the `update-bifrost.yml` reusable workflow so realm pushes to `master` automatically advance Bifrost's submodule pointer. Set (or renew) with:
+**`BIFROST_TOKEN`** — fine-grained PAT scoped to `NorseArchitecture/Bifrost` with `Contents: write`. Used by the `update-bifrost.yml` reusable workflow so realm pushes to `master` automatically advance Bifröst's submodule pointer. Set (or renew) with:
 
 ```bash
 gh secret set BIFROST_TOKEN --org NorseArchitecture --visibility all --body "<token>"
@@ -39,7 +39,7 @@ Requires `gh` authenticated with admin on the target repos. It is idempotent (PU
 gh ruleset list -R NorseArchitecture/<repo>
 ```
 
-Repo discovery and gate classification are both dynamic (`gh repo list` plus `Get-RealmGated` in `scripts/lib/realm-classification.ps1`, reading the same `config/manifest.psd1` that drives scatter) — onboarding a new **default (gated)** realm needs no script edit at all. A realm only needs a `manifest.psd1` `Exceptions` entry when it isn't gated or doesn't take the default scatter group set (currently ungated: Bifrost, Naglfar, Bragi, Glitnir, `.github` / Ginnungagap; everything else discovered in the org is gated).
+Repo discovery and gate classification are both dynamic (`gh repo list` plus `Get-RealmGated` in `scripts/lib/realm-classification.ps1`, reading the same `config/manifest.psd1` that drives scatter) — onboarding a new **default (gated)** realm needs no script edit at all. A realm only needs a `manifest.psd1` `Exceptions` entry when it isn't gated or doesn't take the default scatter group set (currently ungated: Bifröst, Naglfar, Bragi, Glitnir, `.github` / Ginnungagap; everything else discovered in the org is gated).
 
 ### Config scatter
 
@@ -62,8 +62,8 @@ Idempotent — clones each realm, copies its assigned files, and opens (or updat
 Dependency order (each layer rides only on the ones above it):
 
 1. **Asgard** — `Norse.Abstractions.*`: contracts only, no implementations.
-2. **Svartalfheim** — `Norse.Primitives.*`: value types, identifiers, result parsing, encryption.
-3. **Urdarbrunnr** — `Norse.EntityFramework.*`: EF Core foundations (entity base types, DbContext, conventions, value converters, migrations chassis).
+2. **Svartálfheim** — `Norse.Primitives.*`: value types, identifiers, result parsing, encryption.
+3. **Urðarbrunnr** — `Norse.EntityFramework.*`: EF Core foundations (entity base types, DbContext, conventions, value converters, migrations chassis).
 4. **Midgard** — `Norse.Infrastructure.*`: concrete implementations of Asgard's contracts (persistence, caching, external integrations).
 5. **Ratatoskr** — `Norse.NServiceBus.*`: NServiceBus endpoint configuration, saga infrastructure, message conventions, and transport wiring.
 6. **Yggdrasil** — `Norse.Hosting.*`: web/worker/migration service chassis.
@@ -71,7 +71,7 @@ Dependency order (each layer rides only on the ones above it):
 8. **Heimdall** — `Norse.AuthN.*`: the authn story on top of Himinbjörg — login, register, forgot-password, 2FA setup, recovery, and reset — uniform across Blazor Server/WASM/MAUI.
 9. **Bifröst** — `Norse.Orchestration.*`: .NET Aspire composition layer wiring services, databases, queues, config into a running platform.
 10. **Naglfar** — `Norse.DesignSystem.*`: the token pipeline (design tokens, spacing scale, radii, typography). npm-only, no .NET. Standalone — no substrate dependencies. Purpose-built to be superseded when the product vision is realized.
-11. **Bragi** — `Norse.DesignSystem.Stories`: content-only Razor Class Library of component story pages. Rides `NorseRef` on every realm that publishes Blazor components — Asgard's `Abstractions.Components` today, `AuthN.Components.FluentUI` (Heimdall) and `ReferenceData.Components.FluentUI` (Mimir) as each ships. Hosted at runtime by Yggdrasil's `Hosting.Stories.Client`/`.Server`. Split out of Naglfar 2026-07-12.
+11. **Bragi** — `Norse.DesignSystem.Stories`: content-only Razor Class Library of component story pages. Rides `NorseRef` on every realm that publishes Blazor components — Asgard's `Abstractions.Components` today, `AuthN.Components.FluentUI` (Heimdall) and `ReferenceData.Components.FluentUI` (Mímir) as each ships. Hosted at runtime by Yggdrasil's `Hosting.Stories.Client`/`.Server`. Split out of Naglfar 2026-07-12.
 12. **Glitnir** — the design court: specs, plans, and proof-of-concept verdicts. Specs are argued to convergence here *before* any of the above renders code.
 
 Consuming services live under their own root (`{Company}.{Context}.*`), conform to `Norse.Abstractions`, and own everything above the substrate — the platform deliberately knows nothing about their domain (see the "three Billing contexts, zero shared code" example in `profile/README.md` for why that gap is the design, not a gap to close).

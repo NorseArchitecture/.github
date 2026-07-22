@@ -60,7 +60,7 @@ A tag push (`v*.*.*`) is the sole release inception point. Each realm's own `rel
 | [`publish-npm.yml`](.github/workflows/publish-npm.yml) | Packs, generates an SBOM, publishes to GitHub Packages, uploads `npm-artifacts` — publish-only, no release creation |
 | [`publish-container.yml`](.github/workflows/publish-container.yml) | Builds, Trivy-scans, and pushes all four Yggdrasil images to GHCR in parallel (matrix), uploads `container-<name>-artifacts` — publish-only, no release creation |
 | [`create-release.yml`](.github/workflows/create-release.yml) | Downloads every `*-artifacts` bundle a realm's publish jobs produced and creates exactly one GitHub Release |
-| [`update-bifrost.yml`](.github/workflows/update-bifrost.yml) | Stamps the calling realm's new SHA into Bifrost's submodule pointer; requires the `bifrost_token` secret |
+| [`update-bifrost.yml`](.github/workflows/update-bifrost.yml) | Stamps the calling realm's new SHA into Bifröst's submodule pointer; requires the `bifrost_token` secret |
 | [`sound-gjallarhorn.yml`](.github/workflows/sound-gjallarhorn.yml) | Bumps `<{Realm}Version>` in Yggdrasil's `Directory.Packages.props` once a realm's NuGet package is live; skips pre-releases |
 | [`scatter-the-runes.yml`](.github/workflows/scatter-the-runes.yml) | Triggered by pushes to `config/**` — fans updated config to all realms via `scatter-the-runes.ps1` |
 
