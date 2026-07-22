@@ -63,7 +63,7 @@ Dependency order (each layer rides only on the ones above it):
 
 1. **Asgard** — `Norse.Abstractions.*`: contracts only, no implementations.
 2. **Svartálfheim** — `Norse.Primitives.*`: value types, identifiers, result parsing, encryption.
-3. **Urðarbrunnr** — `Norse.EntityFramework.*`: EF Core foundations (entity base types, DbContext, conventions, value converters, migrations chassis).
+3. **Urðarbrunnr** — `Norse.Persistence.*`: the persistence realm — `Norse.Persistence.EntityFramework.*` (EF Core foundations: entity base types, DbContext, conventions, value converters, migrations chassis) is the live vendor family; other ORMs, native drivers, or document/search stores land as siblings.
 4. **Midgard** — `Norse.Infrastructure.*`: concrete implementations of Asgard's contracts (persistence, caching, external integrations).
 5. **Ratatoskr** — `Norse.NServiceBus.*`: NServiceBus endpoint configuration, saga infrastructure, message conventions, and transport wiring.
 6. **Yggdrasil** — `Norse.Hosting.*`: web/worker/migration service chassis.
