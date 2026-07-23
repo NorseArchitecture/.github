@@ -36,10 +36,15 @@
 		# strip target) via Bifrost's root Directory.Build.targets, which only matters for realms
 		# that ship and consume NuGet packages across the platform. The canonical release.yml
 		# itself lives in the separate 'release' group below, not here — see that group's comment.
+		# gen/Directory.Build.props is the canonical Roslyn-generator scaffold (netstandard2.0,
+		# IsRoslynComponent, IsPackable=false, etc. — see Urdarbrunnr's copy for the pattern this
+		# was hoisted from). It scatters as an otherwise-empty gen/ folder into every nuget realm
+		# that has no generator today; the moment one lands, the bootstrap is already sitting there.
 		nuget       = @(
 			'src/Directory.Build.props'
 			'src/Directory.Build.targets'
 			'tests/Directory.Build.targets'
+			'gen/Directory.Build.props'
 		)
 		# Test project MSBuild props — repos with a .NET build and tests
 		tests       = @(
