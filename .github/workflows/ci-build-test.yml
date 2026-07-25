@@ -50,14 +50,18 @@ jobs:
       - name: Test
         env:
           NUGET_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
-        run: dotnet test -c Release --coverage --coverage-output-format cobertura --coverage-output coverage.xml --coverage-settings coverage-settings.xml
+        # Deliberately no --coverage-output: a fixed filename collides across the concurrent
+        # test hosts `dotnet test` spawns per project, racing each other for the same path
+        # (some runs silently drop assemblies from the merge, reporting phantom 0% coverage).
+        # Omitting it lets each host default to its own GUID-named *.cobertura.xml.
+        run: dotnet test -c Release --coverage --coverage-output-format cobertura --coverage-settings coverage-settings.xml
 
       - name: Install ReportGenerator
         run: dotnet tool install -g dotnet-reportgenerator-globaltool --version 5.*
 
       - name: Generate coverage report
         run: |
-          COVERAGE_FILES=$(find . -name "coverage*.xml" -not -path "*/obj/*" | tr '\n' ';' | sed 's/;$//')
+          COVERAGE_FILES=$(find . -iname "*.cobertura.xml" -not -path "*/obj/*" | tr '\n' ';' | sed 's/;$//')
           echo "Coverage files: $COVERAGE_FILES"
           reportgenerator \
             -reports:"$COVERAGE_FILES" \
