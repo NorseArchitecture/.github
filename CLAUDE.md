@@ -65,14 +65,16 @@ Dependency order (each layer rides only on the ones above it):
 2. **Svartálfheim** — `Norse.Primitives.*`: value types, identifiers, result parsing, encryption.
 3. **Urðarbrunnr** — `Norse.Persistence.*`: the persistence realm — `Norse.Persistence.EntityFramework.*` (EF Core foundations: entity base types, DbContext, conventions, value converters, migrations chassis) is the live vendor family; other ORMs, native drivers, or document/search stores land as siblings.
 4. **Midgard** — `Norse.Infrastructure.*`: concrete implementations of Asgard's contracts (persistence, caching, external integrations).
-5. **Ratatoskr** — `Norse.NServiceBus.*`: NServiceBus endpoint configuration, saga infrastructure, message conventions, and transport wiring.
+5. **Ratatoskr** — `Norse.Messaging.*`: the messaging realm; `Norse.Messaging.NServiceBus.*` (endpoint configuration, saga infrastructure, message conventions, transport wiring) is the live vendor family.
 6. **Yggdrasil** — `Norse.Hosting.*`: web/worker/migration service chassis.
 7. **Himinbjörg** — `Norse.Identity.*`: backend-only EF persistence for ASP.NET Identity/OpenIddict — never crosses to WASM or MAUI.
 8. **Heimdall** — `Norse.AuthN.*`: the authn story on top of Himinbjörg — login, register, forgot-password, 2FA setup, recovery, and reset — uniform across Blazor Server/WASM/MAUI.
-9. **Bifröst** — `Norse.Orchestration.*`: .NET Aspire composition layer wiring services, databases, queues, config into a running platform.
-10. **Naglfar** — `Norse.DesignSystem.*`: the token pipeline (design tokens, spacing scale, radii, typography). npm-only, no .NET. Standalone — no substrate dependencies. Purpose-built to be superseded when the product vision is realized.
-11. **Bragi** — `Norse.DesignSystem.Stories`: content-only Razor Class Library of component story pages. Rides `NorseRef` on every realm that publishes Blazor components — Asgard's `Abstractions.Components` today, `AuthN.Components.FluentUI` (Heimdall) and `ReferenceData.Components.FluentUI` (Mímir) as each ships. Hosted at runtime by Yggdrasil's `Hosting.Stories.Client`/`.Server`. Split out of Naglfar 2026-07-12.
-12. **Glitnir** — the design court: specs, plans, and proof-of-concept verdicts. Specs are argued to convergence here *before* any of the above renders code.
+9. **Mímisbrunnr** — `Norse.Reference.Data`: entities, view models, TSV seeders, and migrations for canonical reference data (ISO country/currency codes, IANA time zones).
+10. **Mímir** — `Norse.Reference.Components`/`.Web.Server`/`.Worker`: the serving layer on Mímisbrunnr — Blazor components, gRPC service host, and the background worker that keeps reference data current.
+11. **Bifröst** — `Norse.Orchestration.*`: .NET Aspire composition layer wiring services, databases, queues, config into a running platform.
+12. **Naglfar** — `Norse.DesignSystem.*`: the token pipeline (design tokens, spacing scale, radii, typography). npm-only, no .NET. Standalone — no substrate dependencies. Purpose-built to be superseded when the product vision is realized.
+13. **Bragi** — `Norse.DesignSystem.Stories`: content-only Razor Class Library of component story pages. Rides `NorseRef` on every realm that publishes Blazor components — Asgard's `Abstractions.Components` today, `AuthN.Components.FluentUI` (Heimdall) and `Reference.Components.FluentUI` (Mímir) as each ships. Hosted at runtime by Yggdrasil's `Hosting.Stories.Client`/`.Server`. Split out of Naglfar 2026-07-12.
+14. **Glitnir** — the design court: specs, plans, and proof-of-concept verdicts. Specs are argued to convergence here *before* any of the above renders code.
 
 Consuming services live under their own root (`{Company}.{Context}.*`), conform to `Norse.Abstractions`, and own everything above the substrate — the platform deliberately knows nothing about their domain (see the "three Billing contexts, zero shared code" example in `profile/README.md` for why that gap is the design, not a gap to close).
 
