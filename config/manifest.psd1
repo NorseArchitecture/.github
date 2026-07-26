@@ -40,11 +40,19 @@
 		# IsRoslynComponent, IsPackable=false, etc. — see Urdarbrunnr's copy for the pattern this
 		# was hoisted from). It scatters as an otherwise-empty gen/ folder into every nuget realm
 		# that has no generator today; the moment one lands, the bootstrap is already sitting there.
+		# gen/Directory.Build.targets closes a gap found 2026-07-26: gen/ had no NorseRef-resolution
+		# targets file of its own, so a generator project declaring NorseRef (Urdarbrunnr's first
+		# case, adopting Asgard's Abstractions.Emit) silently got no reference at all outside
+		# Bifrost — MSBuild's implicit walk-up found nothing between gen/ and Bifrost's own root
+		# Directory.Build.targets, and standalone/CI builds (UseProjectReferences=false) never hit
+		# that root file. Same import-or-fallback shape as src/Directory.Build.targets, minus the
+		# analyzer-strip target and NorseDesignRef (neither applies to a generator project today).
 		nuget       = @(
 			'src/Directory.Build.props'
 			'src/Directory.Build.targets'
 			'tests/Directory.Build.targets'
 			'gen/Directory.Build.props'
+			'gen/Directory.Build.targets'
 		)
 		# Test project MSBuild props — repos with a .NET build and tests
 		tests       = @(
