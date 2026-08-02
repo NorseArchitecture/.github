@@ -39,7 +39,7 @@ Requires `gh` authenticated with admin on the target repos. It is idempotent (PU
 gh ruleset list -R NorseArchitecture/<repo>
 ```
 
-Repo discovery and gate classification are both dynamic (`gh repo list` plus `Get-RealmGated` in `scripts/lib/realm-classification.ps1`, reading the same `config/manifest.psd1` that drives scatter) — onboarding a new **default (gated)** realm needs no script edit at all. A realm only needs a `manifest.psd1` `Exceptions` entry when it isn't gated or doesn't take the default scatter group set (currently ungated: Bifröst, Naglfar, Bragi, Glitnir, `.github` / Ginnungagap; everything else discovered in the org is gated).
+Repo discovery and gate classification are both dynamic (`gh repo list` plus `Get-RealmGated` in `scripts/lib/realm-classification.ps1`, reading the same `config/manifest.psd1` that drives scatter) — onboarding a new **default (gated)** realm needs no script edit at all. A realm only needs a `manifest.psd1` `Exceptions` entry when it isn't gated or doesn't take the default scatter group set (currently ungated: Bifröst, Naglfar, Bragi, Glitnir, Vafþrúðnir, `.github` / Ginnungagap; everything else discovered in the org is gated).
 
 ### Config scatter
 

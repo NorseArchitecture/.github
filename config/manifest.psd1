@@ -94,7 +94,7 @@
 		# src/Directory.Build.targets and tests/Directory.Build.targets (no IsAotCompatible=true,
 		# uses CPM — incompatible with 'nuget' group files. See
 		# ../Bifrost/Glitnir/docs/Platform/specs/2026-07-01-norseref-generator-forwarding-design.md)
-		Yggdrasil = @{
+		Yggdrasil   = @{
 			Groups = @('universal', 'sdk', 'dotnet', 'tests', 'ci', 'workflows', 'claude')
 		}
 		# Aspire composition root — universal only; owns its own global.json
@@ -103,7 +103,7 @@
 		# no gate / build CI check exists for an Aspire AppHost. No 'claude' group —
 		# Bifrost is the valid session root and hand-owns its own permissions+deny
 		# .claude/settings.json, not the submodule guard hook.
-		Bifrost   = @{
+		Bifrost     = @{
 			Groups = @('universal', 'ci')
 			Gated  = $false
 		}
@@ -117,7 +117,7 @@
 		# canonical single-target template every other 'nuget'-shipping realm scatters unmodified.
 		# Ungated for now — real dotnet-test coverage exists as of 2026-07-12
 		# (tests/DesignSystem.Tokens.Tests), unlike when this was first written; revisit Gated.
-		Naglfar   = @{
+		Naglfar     = @{
 			Groups = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows', 'claude')
 			Gated  = $false
 		}
@@ -133,18 +133,27 @@
 		# Naglfar's Exceptions entry the same day 'release' was split out of 'nuget' and the
 		# omission rode along by copy-paste; without it scatter never overwrote whatever
 		# release.yml Bragi was left with post-split, and it went stale (2026-07-15).
-		Bragi     = @{
+		Bragi       = @{
 			Groups = @('universal', 'sdk', 'dotnet', 'nuget', 'release', 'tests', 'ci', 'workflows', 'claude')
 			Gated  = $false
 		}
 		# Docs and proofs of concept — git hygiene only. Ungated.
-		Glitnir   = @{
+		Glitnir     = @{
+			Groups = @('git', 'ci', 'workflows', 'claude')
+			Gated  = $false
+		}
+		# Bruno gRPC/REST/MCP collections — GUI-authored yml, no .NET build. Bruno's CLI can't
+		# drive gRPC yet, and there's no integration server to bounce requests off of, so for now
+		# this rides exactly like Glitnir: git hygiene only, ungated, still gets update-bifrost.yml
+		# so a merge to master flows through the same submodule-bump path as every other realm.
+		# Revisit once Bruno's gRPC support and an integration server both land.
+		Vafthrudnir = @{
 			Groups = @('git', 'ci', 'workflows', 'claude')
 			Gated  = $false
 		}
 		# Source of the canonical config — scatter excludes it outright (see
 		# ScatterExcludes above); only its Gated classification is relevant here.
-		'.github' = @{
+		'.github'   = @{
 			Gated = $false
 		}
 	}
