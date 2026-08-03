@@ -29,6 +29,10 @@
 		# Root MSBuild props — repos with a .NET build but not shipping to NuGet
 		dotnet      = @(
 			'Directory.Build.props'
+			# Realm-root targets (first minted 2026-08-03): targets-time law — the SDK-implicit-using
+			# removal and the analyzer delivery Choose, which MUST evaluate after Directory.Packages.props
+			# so CPM's property is visible (props-level delivery misfires NU1008 under CPM, proven live).
+			'Directory.Build.targets'
 		)
 		# NuGet packaging props — repos that ship NuGet packages. tests/Directory.Build.targets
 		# lives here too (not in 'tests' below): same audience as src/Directory.Build.targets for
