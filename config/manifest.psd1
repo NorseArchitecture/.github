@@ -36,11 +36,20 @@
 		# 2026-08-07 alongside the .editorconfig ReSharper block.
 		dotnet      = @(
 			'Directory.Build.props'
-			# Realm-root targets (first minted 2026-08-03): targets-time law — the SDK-implicit-using
-			# removal and the analyzer delivery Choose, which MUST evaluate after Directory.Packages.props
-			# so CPM's property is visible (props-level delivery misfires NU1008 under CPM, proven live).
-			'Directory.Build.targets'
 			'{Realm}.sln.DotSettings'
+		)
+		# Realm-root targets (first minted 2026-08-03; split out of 'dotnet' into its own
+		# group 2026-08-08): targets-time law — the SDK-implicit-using removal and the
+		# analyzer delivery Choose, which MUST evaluate after Directory.Packages.props so
+		# CPM's property is visible (props-level delivery misfires NU1008 under CPM, proven
+		# live). Split so a realm can keep receiving Directory.Build.props/
+		# {Realm}.sln.DotSettings normally while opting out of just this one file —
+		# Svartálfheim and Naglfar are the first cases: both are permanent architectural
+		# leaves (never declare a NorseRef/NorseDesignRef/NorseGeneratorRef, by design, not
+		# by current absence) for whom this file's NorseRef-oriented machinery can never
+		# fire. the-runes.md ch. 2/7.
+		msbuild     = @(
+			'Directory.Build.targets'
 		)
 		# NuGet packaging props — repos that ship NuGet packages. tests/Directory.Build.targets
 		# lives here too (not in 'tests' below): same audience as src/Directory.Build.targets for
@@ -103,9 +112,14 @@
 		)
 	}
 	# Default group set for any repo not named in Exceptions below.
-	DefaultGroups   = @('universal', 'sdk', 'dotnet', 'nuget', 'release', 'tests', 'ci', 'workflows', 'claude')
-	# Repos scatter must never sync into — source of the config, not a consumer.
-	ScatterExcludes = @('.github')
+	DefaultGroups   = @('universal', 'sdk', 'dotnet', 'msbuild', 'nuget', 'release', 'tests', 'ci', 'workflows', 'claude')
+	# Repos scatter must never sync into. '.github' is the source of the config, not a
+	# consumer. 'EFCore.NamingConventions' is a fork of a third-party library
+	# (github.com/efcore/EFCore.NamingConventions, tracked as 'upstream') — not a platform
+	# realm, and scattering our own conventions into it fights its ability to cleanly pull
+	# and merge from upstream. Already found contaminated with .editorconfig/
+	# Directory.Build.props/global.json from a prior scatter run; excluded 2026-08-08.
+	ScatterExcludes = @('.github', 'EFCore.NamingConventions')
 	# Anything NOT listed here is a default realm: ships to NuGet, full group
 	# set, gated CI. Exception entries declare only the fields that differ
 	# from default — an absent field falls back to DefaultGroups / Gated=$true.
@@ -131,6 +145,19 @@
 			Groups = @('universal', 'ci')
 			Gated  = $false
 		}
+		# The forge — Norse.Primitives, the platform's dependency-graph root. Permanent
+		# architectural leaf: nothing sits below it, so it never declares a NorseRef/
+		# NorseDesignRef/NorseGeneratorRef and never will (2026-08-08 ruling). Owns its own
+		# realm-root Directory.Build.targets from here on — lean: chain import, the NORSE070
+		# wire-format ban, and its own standalone-mode analyzer self-check (so its own
+		# projects still get checked against Architecture.Analyzers/Primitives.Analyzers in
+		# CI). The NorseRef fallback Choose, the Architecture.Analyzers package Choose, and
+		# the generator-strip target are all dropped — none can ever fire here, and the
+		# Architecture.Analyzers Choose was actively double-delivering the package alongside
+		# this realm's own manifest ProjectReference. the-runes.md ch. 2/7.
+		Svartalfheim = @{
+			Groups = @('universal', 'sdk', 'dotnet', 'nuget', 'release', 'tests', 'ci', 'workflows', 'claude')
+		}
 		# Design system — token pipeline (JS/Style Dictionary) plus DesignSystem.Tokens, a single
 		# 100%-generated .NET package (FluentTokenSeed.g.cs + norse-design-tokens.css) packed
 		# alongside @norsearchitecture/design-tokens in the same release step. "npm-only, no .NET"
@@ -141,6 +168,11 @@
 		# canonical single-target template every other 'nuget'-shipping realm scatters unmodified.
 		# Ungated for now — real dotnet-test coverage exists as of 2026-07-12
 		# (tests/DesignSystem.Tokens.Tests), unlike when this was first written; revisit Gated.
+		# Also excluded from 'msbuild' (2026-08-08, same ruling as Svartálfheim above, a
+		# permanent architectural leaf) — but unlike Svartálfheim, Directory.Build.targets is
+		# deleted outright here, not replaced: an RCL wrapping generated token CSS + a
+		# generated C# file has no hand-authored surface for any analyzer to ever police,
+		# so even the lean self-check has nothing to attach to. the-runes.md ch. 2/7.
 		Naglfar     = @{
 			Groups = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows', 'claude')
 			Gated  = $false
@@ -180,6 +212,12 @@
 		# Source of the canonical config — scatter excludes it outright (see
 		# ScatterExcludes above); only its Gated classification is relevant here.
 		'.github'   = @{
+			Gated = $false
+		}
+		# Third-party library fork — scatter excludes it outright (see ScatterExcludes
+		# above); only its Gated classification is relevant here. Not a platform realm, so
+		# none of our build-gate CI conventions apply — it carries its own upstream CI.
+		'EFCore.NamingConventions' = @{
 			Gated = $false
 		}
 	}
