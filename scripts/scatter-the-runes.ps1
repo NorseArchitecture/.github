@@ -94,8 +94,12 @@ foreach ($Realm in $TargetRealms) {
 		if ($LASTEXITCODE -ne 0) { throw "branch checkout failed (exit $LASTEXITCODE)" }
 
 		foreach ($File in $Files) {
+			# {Realm} in a manifest path is a filename token: the source file carries the
+			# literal braces name in config/; the destination substitutes the repo name
+			# (first case: {Realm}.sln.DotSettings — R# names its team-shared layer after
+			# the solution, and every realm's solution is named for the repo).
 			$Source  = Join-Path $ConfigDir $File
-			$Dest    = Join-Path $TempDir $File
+			$Dest    = Join-Path $TempDir ($File -replace '\{Realm\}', $Realm)
 			$DestDir = Split-Path -Parent $Dest
 			if (-not (Test-Path $DestDir)) {
 				New-Item -ItemType Directory -Path $DestDir | Out-Null

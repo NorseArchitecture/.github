@@ -27,12 +27,20 @@
 			'global.json'
 		)
 		# Root MSBuild props — repos with a .NET build but not shipping to NuGet
+		# {Realm}.sln.DotSettings is the team-shared ReSharper layer: the "Norse Cleanup"
+		# profile (usings tasks OFF — R#'s resolver is degraded on .NET 11 preview and
+		# strips live usings; IDE0005-as-error owns using hygiene instead) plus silent-
+		# cleanup default. The {Realm} token in the filename is replaced with the repo
+		# name at scatter time (R# requires {SolutionName}.sln.DotSettings, and every
+		# realm's solution is named for the repo). Proven in Asgard's trial by fire
+		# 2026-08-07 alongside the .editorconfig ReSharper block.
 		dotnet      = @(
 			'Directory.Build.props'
 			# Realm-root targets (first minted 2026-08-03): targets-time law — the SDK-implicit-using
 			# removal and the analyzer delivery Choose, which MUST evaluate after Directory.Packages.props
 			# so CPM's property is visible (props-level delivery misfires NU1008 under CPM, proven live).
 			'Directory.Build.targets'
+			'{Realm}.sln.DotSettings'
 		)
 		# NuGet packaging props — repos that ship NuGet packages. tests/Directory.Build.targets
 		# lives here too (not in 'tests' below): same audience as src/Directory.Build.targets for
