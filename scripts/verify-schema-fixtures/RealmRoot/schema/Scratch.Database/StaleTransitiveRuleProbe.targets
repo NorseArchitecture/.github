@@ -1,0 +1,15 @@
+<Project>
+	<!--
+		Stale-transitive-strip probe (Task 8 assertion group 4), conditionally imported via
+		-p:NorseInjectStaleTransitiveRule=true. Stands in for "a rules package arriving
+		transitively through another database package's pinned dependency": an ordinary
+		PackageReference to the packed Norse.Scratch.Rules, restored alongside the live
+		Rules="true" ProjectReference that workspace mode already emits. Both land in
+		@(Analyzer); _NorseRemoveStaleTransitiveRules (schema/Directory.Build.targets) is
+		expected to strip the packed one (no MSBuildSourceProjectFile metadata) and keep only
+		the live ProjectReference-sourced copy.
+	-->
+	<ItemGroup>
+		<PackageReference Include="Norse.Scratch.Rules" Version="*" />
+	</ItemGroup>
+</Project>

@@ -1,0 +1,6 @@
+# Every file the harness produces by building/packing the fixture — never checked in. The
+# RealmRoot/Directory.Build.*, schema/Directory.Build.*, and nuget.config copies ARE checked in
+# (refreshed by verify-schema-templates.ps1's Sync-FixtureTemplates on every run, never
+# hand-maintained) — this file exists only to keep the OTHER kind of "generated" out.
+[Bb]in/
+[Oo]bj/

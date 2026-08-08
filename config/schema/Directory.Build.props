@@ -1,0 +1,23 @@
+<Project>
+	<Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+	<PropertyGroup>
+		<!-- Native SQL Server by default (ruled 2026-08-07) — the template assumes nothing about
+		     hosting. An Azure SQL consumer overrides with SqlAzureV12DatabaseSchemaProvider in
+		     the consuming sqlproj (which carries its own DSP line anyway: the VS Code SQL
+		     projects extension cannot read it from Directory.Build.props). -->
+		<DSP>Microsoft.Data.Tools.Schema.Sql.Sql170DatabaseSchemaProvider</DSP>
+		<ModelCollation>1033, CI</ModelCollation>
+		<!-- Brand injection, the same one-edit rebrand law as assemblies. -->
+		<PackageId>Norse.$(MSBuildProjectName)</PackageId>
+		<!-- SR0016 (EXECUTE permissions), SR0011 (special chars in names), SR0009 (varchar over
+		     char) — Microsoft rules whose guidance conflicts with platform law; suppressed at
+		     the source so TreatTSqlWarningsAsErrors below doesn't weaponize them. -->
+		<SqlCodeAnalysisRules>-Microsoft.Rules.Data.SR0016;-Microsoft.Rules.Data.SR0011;-Microsoft.Rules.Data.SR0009</SqlCodeAnalysisRules>
+		<SqlTargetName>Norse.$(MSBuildProjectName)</SqlTargetName>
+		<TargetDatabaseSet>True</TargetDatabaseSet>
+		<!-- Escalates T-SQL compiler warnings ONLY. DacFx static-code-analysis warnings are a
+		     different tool family this property never touches — rule PROMOTION (+!RuleId) is the
+		     only error path for those. the-runes.md ch. 8. -->
+		<TreatTSqlWarningsAsErrors>True</TreatTSqlWarningsAsErrors>
+	</PropertyGroup>
+</Project>

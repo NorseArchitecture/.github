@@ -22,7 +22,9 @@
 param(
 	[Parameter(ValueFromRemainingArguments)]
 	[string[]]$Realms,
-	[switch]$DryRun
+	[switch]$DryRun,
+	[switch]$Audit,
+	[string[]]$AcceptDivergence = @()
 )
 
 $ErrorActionPreference = 'Stop'
@@ -33,6 +35,7 @@ $ConfigDir = Join-Path $PSScriptRoot '../config'
 $Manifest  = Import-PowerShellDataFile (Join-Path $ConfigDir 'manifest.psd1')
 
 . (Join-Path $PSScriptRoot 'lib/realm-classification.ps1')
+. "$PSScriptRoot/lib/rune-lineage.ps1"
 
 function Get-RealmFiles {
 	param([string]$RealmName)
@@ -92,6 +95,28 @@ foreach ($Realm in $TargetRealms) {
 			git checkout -b $Branch --quiet
 		}
 		if ($LASTEXITCODE -ne 0) { throw "branch checkout failed (exit $LASTEXITCODE)" }
+
+		$Report = foreach ($File in $Files) {
+			# {Realm} in a manifest filename is a token — substitute it the same way the copy
+			# loop below does before probing/hashing the real on-disk file. Comparing against the
+			# raw tokenized path (literal braces) never exists on disk, so Test-Path always failed
+			# and every {Realm}-tokenized file (e.g. {Realm}.sln.DotSettings) silently classified
+			# as 'Stale' instead of actually being checked for realm divergence.
+			$RealmFile = $File -replace '\{Realm\}', $Realm
+			$Dest = Join-Path $TempDir $RealmFile
+			$Classification = (Test-Path $Dest) ?
+				(Get-RuneClassification -ConfigRepo $PSScriptRoot/.. -CanonicalRelPath "config/$File" -DestFile $Dest) :
+				'Stale'   # a file the realm never had is just not-yet-scattered
+			[pscustomobject]@{ Realm = $Realm; File = $RealmFile; State = $Classification }
+		}
+		$Report | ForEach-Object { Write-Host "    [$($_.State)] $($_.File)" }
+		if ($Audit) { continue }   # audit mode reports and touches nothing
+
+		$Unavailable = @($Report | Where-Object State -eq 'LineageUnavailable')
+		if ($Unavailable) { throw "Lineage unavailable for $($Unavailable.Count) file(s) in $Realm — full history of the config repo is required (no shallow checkout). Files: $($Unavailable.File -join ', ')" }
+
+		$Divergent = @($Report | Where-Object { $_.State -eq 'Divergent' -and "$Realm/$($_.File)" -notin $AcceptDivergence })
+		if ($Divergent) { throw "Refusing to overwrite realm-divergent file(s) in $Realm — a scattered file is canonical by definition; realm law lives in Directory.Analyzers.props or Directory.Realm.targets. Re-run with -AcceptDivergence for a deliberate reversion. Files: $($Divergent.File -join ', ')" }
 
 		foreach ($File in $Files) {
 			# {Realm} in a manifest path is a filename token: the source file carries the

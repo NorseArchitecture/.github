@@ -1,0 +1,24 @@
+<Project>
+	<!--
+		Package-crossing enablement — the mirror of schema/Directory.Build.targets' workspace-mode
+		default, for the mode where that file's own PropertyGroup (gated on
+		UseProjectReferences=='true') never fires. A plain PackageReference to Norse.Scratch.Rules
+		auto-imports this file (NuGet's build/{PackageId}.targets convention); nothing else in the
+		package-mode chain would ever set RunSqlCodeAnalysis or promote NR0001 to an error.
+	-->
+	<PropertyGroup>
+		<RunSqlCodeAnalysis Condition="'$(RunSqlCodeAnalysis)' == ''">true</RunSqlCodeAnalysis>
+		<SqlCodeAnalysisRules Condition="!$(SqlCodeAnalysisRules.Contains('+!Scratch.Rules.NR0001'))">$(SqlCodeAnalysisRules);+!Scratch.Rules.NR0001</SqlCodeAnalysisRules>
+	</PropertyGroup>
+	<!--
+		The rule assembly itself: DacFx's SqlStaticCodeAnalysisTask loads custom rules from
+		@(Analyzer) (SqlCodeAnalysisAssemblyPaths), the same item a ProjectReference with
+		OutputItemType="Analyzer" populates in workspace mode. A bare PackageReference does not
+		populate it — this Include is the package crossing's entire delivery mechanism for the
+		rule DLL itself, no different in kind from a Roslyn analyzer package's analyzers/dotnet/cs
+		convention, just DacFx's own item name instead.
+	-->
+	<ItemGroup>
+		<Analyzer Include="$(MSBuildThisFileDirectory)../lib/netstandard2.0/Norse.Scratch.Rules.dll" />
+	</ItemGroup>
+</Project>

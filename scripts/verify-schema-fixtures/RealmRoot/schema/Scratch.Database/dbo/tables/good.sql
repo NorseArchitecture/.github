@@ -1,0 +1,4 @@
+CREATE TABLE [dbo].[good]
+(
+	[Id] INT NOT NULL PRIMARY KEY
+);

@@ -1,0 +1,43 @@
+<Project>
+	<PropertyGroup>
+		<_ParentTargets>$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))</_ParentTargets>
+	</PropertyGroup>
+	<Import Project="$(_ParentTargets)" Condition="Exists('$(_ParentTargets)')" />
+	<!--
+		The package crossing delivers a rules package's packed build/*.targets, which is what
+		enables analysis and promotes its rule IDs to errors; a ProjectReference NEVER imports
+		packed targets, so without this default a workspace-mode sqlproj's custom rules
+		silently never run even with the rules DLL correctly present in @(Analyzer). Proven
+		in the ancestor estate; doctrine: the-runes.md ch. 8.
+	-->
+	<PropertyGroup Condition="'$(UseProjectReferences)' == 'true'">
+		<RunSqlCodeAnalysis Condition="'$(RunSqlCodeAnalysis)' == ''">true</RunSqlCodeAnalysis>
+		<!--
+			Rule promotion extension point. A consumer platform shipping a rules package mirrors
+			its packed promotion tokens here, one Contains-guarded line per rule — the guard makes
+			re-appending idempotent (DacFx throws SQL72039 on a duplicated RuleId) regardless of
+			whether the packed targets also ran. Item-derived Import paths are structurally
+			impossible (imports resolve at the properties pass), so the tokens are hardcoded by
+			design, not laziness. Exemplar shape, commented until a rules package exists:
+			<SqlCodeAnalysisRules Condition="!$(SqlCodeAnalysisRules.Contains('+!Example.Rules.XR0001'))">$(SqlCodeAnalysisRules);+!Example.Rules.XR0001</SqlCodeAnalysisRules>
+		-->
+	</PropertyGroup>
+	<!--
+		Stale-transitive strip, mirror polarity of the Roslyn strip in the realm-root targets:
+		in workspace mode a rules package can also arrive transitively through another database
+		package's pinned dependency, shadowing the live local source with a stale packed copy.
+		Only the packed copy (no MSBuildSourceProjectFile metadata) of a Rules= NorseRef this
+		project declared is stripped — the live ProjectReference copy is the one that runs.
+	-->
+	<Target Name="_NorseRemoveStaleTransitiveRules" BeforeTargets="Build" Condition="'$(UseProjectReferences)' == 'true' and '@(Analyzer)' != ''">
+		<ItemGroup>
+			<_NorseLiveRule Include="@(NorseRef->WithMetadataValue('Rules', 'true')->'Norse.%(Identity)')" />
+		</ItemGroup>
+		<PropertyGroup>
+			<_NorseLiveRuleNames>;@(_NorseLiveRule);</_NorseLiveRuleNames>
+		</PropertyGroup>
+		<ItemGroup>
+			<Analyzer Remove="@(Analyzer)" Condition="'%(Analyzer.MSBuildSourceProjectFile)' == '' and $(_NorseLiveRuleNames.Contains(';%(Analyzer.Filename);'))" />
+		</ItemGroup>
+	</Target>
+</Project>

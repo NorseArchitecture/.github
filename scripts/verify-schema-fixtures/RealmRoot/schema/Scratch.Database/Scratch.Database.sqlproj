@@ -1,0 +1,77 @@
+<Project>
+	<Sdk Name="Microsoft.Build.Sql" Version="2.2.0" />
+	<ItemGroup>
+		<!-- The Rules crossing under test: Scratch.Rules is a same-repo DacFx rules library
+		     (RealmRoot/src/Scratch.Rules), consumed analyzer-shaped in both modes. -->
+		<NorseRef Include="Scratch.Rules">
+			<Rules>true</Rules>
+		</NorseRef>
+		<!-- A second NorseRef to the same target, carrying a custom metadata key
+		     (DatabaseSqlCmdVariable — the platform's own canonical passthrough example, per
+		     Bifrost's root Directory.Build.targets) purely to prove transforms below carry
+		     arbitrary metadata through untouched. Not a real SqlCmd variable wiring — this
+		     fixture has one database, nothing to parameterize. -->
+		<NorseRef Include="Scratch.Rules">
+			<Rules>true</Rules>
+			<DatabaseSqlCmdVariable>ref_db</DatabaseSqlCmdVariable>
+		</NorseRef>
+	</ItemGroup>
+	<!--
+		Fixture-local stand-in for Bifröst's root Directory.Build.targets Rules="true" Choose
+		(Norse.Orchestration.AppHost, not part of this checkout). This fixture is deliberately
+		NOT nested under a real Bifröst — "the fixture realm root IS the top" — so the platform's
+		real cross-repo %(Repo) resolution has nothing to walk up to. This block proves the SAME
+		shape one level down: same two branches (ProjectReference+Analyzer in workspace mode,
+		PackageReference in package mode), same metadata-passthrough guarantee, scoped to the one
+		reference kind a schema project ever declares. Task 8 report documents this as a deliberate
+		fixture adaptation, not a new platform mechanism.
+	-->
+	<Choose>
+		<When Condition="'$(UseProjectReferences)' == 'true'">
+			<ItemGroup>
+				<ProjectReference Include="@(NorseRef->WithMetadataValue('Rules', 'true')->'$(MSBuildThisFileDirectory)../../src/%(Identity)/%(Identity).csproj')" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+			</ItemGroup>
+		</When>
+		<Otherwise>
+			<ItemGroup>
+				<!-- Distinct() collapses the two same-Identity NorseRef items to one
+				     PackageReference — NuGet restore rejects duplicate PackageReference Includes,
+				     unlike MSBuild's tolerance for duplicate ProjectReference above. -->
+				<PackageReference Include="@(NorseRef->WithMetadataValue('Rules', 'true')->'Norse.%(Identity)'->Distinct())" Version="*" />
+			</ItemGroup>
+		</Otherwise>
+	</Choose>
+	<!--
+		Consumed above; cleared before RealmRoot/Directory.Build.targets' own standalone NorseRef
+		fallback runs (imported later, at schema/Directory.Build.targets' own top, per the SDK's
+		Directory.Build.targets auto-import). That fallback keys on Bifröst's absence, never on
+		UseProjectReferences or Rules metadata — unconditionally on for this ancestor-less fixture
+		— and would otherwise double-emit a second, non-deduplicated PackageReference for the same
+		identity, tripping NuGet's NU1504 (duplicate PackageReference) the moment this project
+		actually restores. Real platform realms never hit this: nested under Bifröst, that
+		fallback's own ancestor check takes it out of play entirely.
+	-->
+	<ItemGroup>
+		<NorseRef Remove="@(NorseRef)" />
+	</ItemGroup>
+	<!--
+		schema/Directory.Build.targets' own _NorseRemoveStaleTransitiveRules (imported inline,
+		above, as part of RealmRoot/Directory.Build.targets' chain) reads @(NorseRef) again at
+		BUILD-EXECUTION time to compute which rule identities are "live" — but that read happens
+		long after the NorseRef Remove above already ran at EVALUATION time. Evaluation-time
+		clearing (needed so the Otherwise fallback above never sees these items) and
+		execution-time re-population (needed so the canonical strip target can do its job) are
+		different phases and don't conflict: restore has already fixed the PackageReference set
+		by this point, so re-adding NorseRef here cannot resurrect the fallback's PackageReference.
+	-->
+	<Target Name="_RestoreNorseRefForStaleStrip" BeforeTargets="_NorseRemoveStaleTransitiveRules">
+		<ItemGroup>
+			<NorseRef Include="Scratch.Rules">
+				<Rules>true</Rules>
+			</NorseRef>
+		</ItemGroup>
+	</Target>
+	<!-- Assertion group 4 probe only — see StaleTransitiveRuleProbe.targets. Inert unless the
+	     harness passes -p:NorseInjectStaleTransitiveRule=true. -->
+	<Import Project="StaleTransitiveRuleProbe.targets" Condition="'$(NorseInjectStaleTransitiveRule)' == 'true'" />
+</Project>

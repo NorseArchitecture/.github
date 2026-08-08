@@ -43,17 +43,45 @@ Repo discovery and gate classification are both dynamic (`gh repo list` plus `Ge
 
 ### Config scatter
 
-`config/` (with `config/manifest.psd1` declaring which file groups each realm receives) is the source of truth for platform-wide config — `.editorconfig`, `.gitattributes`, `.gitignore`, `global.json`, `nuget.config`, `LICENSE`, MSBuild props, and the realm-facing `release.yml`. A push to `config/**` on `master` triggers `scatter-the-runes.yml` automatically; it can also be run by hand:
+`config/` (with `config/manifest.psd1` declaring which file groups each realm receives) is the source of truth for platform-wide config — `.editorconfig`, `.gitattributes`, `.gitignore`, `global.json`, `nuget.config`, `LICENSE`, MSBuild props, and the realm-facing `release.yml`. The current `Groups` keys are `git`, `universal`, `sdk`, `dotnet`, `nuget`, `tests`, `schema`, `ci`, `release`, `workflows`, `claude` — check `config/manifest.psd1` itself before citing this list elsewhere; it is the source of truth, this sentence is a convenience mirror. `schema` is assigned to no realm in `DefaultGroups` — see "Schema projects" below. A push to `config/**` on `master` triggers `scatter-the-runes.yml` automatically; it can also be run by hand:
 
 ```powershell
 ./scripts/scatter-the-runes.ps1                                    # all realms
 ./scripts/scatter-the-runes.ps1 Svartalfheim                       # one realm
 ./scripts/scatter-the-runes.ps1 -DryRun                            # print plan, no writes
+./scripts/scatter-the-runes.ps1 -Audit                             # classify only, write nothing
 ```
 
 Idempotent — clones each realm, copies its assigned files, and opens (or updates) an auto-merge PR. Requires `SCATTER_PAT`; locally, `gh auth login` or `$env:GH_TOKEN` substitutes for it.
 
+**Lineage classification and the canonicity law.** Before copying anything, the script classifies each destination file against the canonical file's git lineage — `Get-RuneClassification` in `scripts/lib/rune-lineage.ps1`, dot-sourced by `scatter-the-runes.ps1` — into one of four states:
+
+- **`Current`** — destination blob matches `HEAD` of the canonical path. Nothing to do.
+- **`Stale`** — destination blob matches an earlier commit in the canonical path's lineage (or the realm never had the file at all). Ordinary, expected, overwritten normally.
+- **`Divergent`** — destination content is outside the canonical file's lineage entirely: a realm edited a file that's supposed to be canonical. Hard-fails the run unless the specific `Realm/path` is named via `-AcceptDivergence` (a deliberate, explicit reversion) — scatter must never silently clobber a realm's own edits, but it also must never silently accept them as the new canon.
+- **`LineageUnavailable`** — no git history exists for the canonical path, or the local clone of Ginnungagap is shallow. Unconditional hard-fail, never conflated with `Divergent` and never silently passed — full history is required, which is why `scatter-the-runes.yml`'s checkout step carries `fetch-depth: 0`.
+
+`-Audit` runs the same classification pass and prints it, then continues to the next realm without copying, committing, or pushing — a read-only health check across the whole org, safe to run anytime.
+
+The canonicity law this enforces: **a scattered file is canonical by definition — realm-owned law never edits one.** A realm's own analyzer or targets law instead lives in one of two files that exist per-realm but are never listed in any scatter group, so scatter never touches them: `Directory.Analyzers.props` (the realm's manifest of `NorseRealmAnalyzer` items — its own Roslyn diagnostics analyzers) and `Directory.Realm.targets` (additive-only — new items and targets, never a redefinition of canonical property/target law). Both are imported at the tail of the realm-root `Directory.Build.targets` that ships in the `dotnet` group; see "Realm-root targets" below.
+
 `scripts/sound-gjallarhorn.ps1` (renamed from `phone-home-nuget.ps1` on 2026-06-30 — check any older notes for the stale name) is the other scatter-adjacent script: it bumps `<{Realm}Version>` in Yggdrasil's `Directory.Packages.props` after a realm's tagged release and opens an auto-merge PR there. It's invoked by `sound-gjallarhorn.yml`, not run by hand.
+
+### Realm-root targets
+
+`config/Directory.Build.targets` (part of the `dotnet` group) is the single home of MSBuild law shared across every layer of a realm — `src/`, `tests/`, `gen/`, and now `schema/` — so the group-level `Directory.Build.targets` files (`src/`, `tests/`, `gen/`, `schema/`) stay thin: an import-the-parent chain stub plus, at most, one property that is genuinely specific to that layer (`tests/`'s `OutputType=Exe`, `src/`'s `OutputType=Library`). Minted 2026-08-03, widened 2026-08-07 when two more pieces of law hoisted up out of the `src`/`tests`/`gen` group files to cover `schema/` too and close a dormant-generator-strip gap in `gen/`:
+
+- the standalone `NorseRef`/`NorseDesignRef` package-reference fallback (keys on Bifröst's *absence*, never on `UseProjectReferences` — in the workspace, Bifröst's own root `Choose` owns both crossings and emitting here too would double-emit);
+- the standalone realm-analyzer-manifest attach — imports the realm's own `Directory.Analyzers.props` if present and wires each declared `NorseRealmAnalyzer` in as a realm-internal `ProjectReference`, guarded twice over (once on the `Import` so the workspace doesn't double-import via Bifröst's own wildcard, once on the `ItemGroup` so the workspace's manifest-driven attach stays the sole attacher there);
+- the generator-strip target `_NorseRemoveUnwantedGeneratorAnalyzers`, which now runs for `gen/` projects as well as `src/`/`tests/` — previously `gen/` had no strip of its own, a gap the Task 7 postmortem called out by name.
+
+The file ends with `<Import Project="...Directory.Realm.targets" Condition="Exists(...)" />` — imported last, deliberately, so a realm's additive law can react to fully-evaluated canonical state instead of racing it.
+
+### Schema projects
+
+The `schema` group (`config/schema/Directory.Build.props` + `.targets`, opt-in only — see "Config scatter" above) exists for consumer platforms bridging to Microsoft.Build.Sql (DacFx) schema projects; the platform's own persistence stays EF Core + Postgres. `Directory.Build.props` sets `DSP`/`ModelCollation`, brand-injects `PackageId`/`SqlTargetName` the same way every other project family does, and turns on `TreatTSqlWarningsAsErrors` for T-SQL compiler warnings specifically (DacFx static-analysis rule promotion is a separate mechanism, `+!RuleId` tokens in `SqlCodeAnalysisRules`, never this property). `Directory.Build.targets` defaults `RunSqlCodeAnalysis=true` under `UseProjectReferences=true` — a rules package's packed `build/*.targets` (the actual thing that enables analysis and promotes rule IDs to errors) only auto-imports across a NuGet package crossing, never through a bare `ProjectReference`, so without this default a workspace-mode sqlproj's custom rules silently never ran even with the rules DLL present. It also carries a commented rule-promotion extension-point exemplar (a consumer mirrors one `Contains`-guarded `SqlCodeAnalysisRules` line per rule it ships) and a stale-transitive-rule strip target mirroring the Roslyn generator strip's provenance doctrine — only a *packed* copy of a `Rules="true"` `NorseRef` gets stripped; the live `ProjectReference` copy always wins.
+
+`scripts/verify-schema-templates.ps1` is the disposable-fixture harness that proves all of the above end to end (fixture realm under `scripts/verify-schema-fixtures/`, never hand-edited except by the harness's own template-refresh step): workspace-mode evaluation and build, package-mode build via a throwaway local feed, rule promotion actually failing the build when a fixture table named `forbidden` exists, and the stale-transitive-rule strip actually removing a shadowing packed copy. Run it after any change under `config/schema/`.
 
 ## Architecture: the cosmos
 

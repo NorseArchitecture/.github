@@ -70,6 +70,14 @@
 		tests       = @(
 			'tests/Directory.Build.props'
 		)
+		# Microsoft.Build.Sql schema projects — assigned to NO realm by default; a repo opts in
+		# via its Exceptions entry the day it grows a {Realm}/schema/{Name}.Database project.
+		# The platform's own persistence remains EF Core + Postgres constraints (Key Rejections);
+		# this group exists for consumer bridges that chose SQL Server. the-runes.md ch. 8.
+		schema      = @(
+			'schema/Directory.Build.props'
+			'schema/Directory.Build.targets'
+		)
 		# CI workflows — all realms including Bifrost
 		ci          = @(
 			'.github/workflows/auto-approve.yml'
@@ -103,8 +111,12 @@
 	# from default — an absent field falls back to DefaultGroups / Gated=$true.
 	Exceptions      = @{
 		# Runtime host — universal + dotnet + tests (props only, no 'nuget'); owns its own
-		# src/Directory.Build.targets and tests/Directory.Build.targets (no IsAotCompatible=true,
-		# uses CPM — incompatible with 'nuget' group files. See
+		# src/Directory.Build.targets and tests/Directory.Build.targets by convention, not because
+		# of a structural incompatibility — since the group-level shrink (2026-08-07) these files
+		# are byte-identical to the canonical scattered 'nuget' group versions and CPM-safe.
+		# Yggdrasil-owned and manually kept in sync with the canonical files; a candidate for a
+		# future minor manifest simplification (folding it back into 'nuget') rather than a
+		# permanent exception. See
 		# ../Bifrost/Glitnir/docs/Platform/specs/2026-07-01-norseref-generator-forwarding-design.md)
 		Yggdrasil   = @{
 			Groups = @('universal', 'sdk', 'dotnet', 'tests', 'ci', 'workflows', 'claude')
