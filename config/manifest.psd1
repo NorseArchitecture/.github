@@ -136,18 +136,20 @@
 		# Design system — story content only: DesignSystem.Stories, a content-only Razor Class
 		# Library (.stories.razor, .NET, consumes Abstractions.Components et al. via NorseRef).
 		# Split out of Naglfar 2026-07-12 — see ../Bifrost/Glitnir/docs/Platform/specs/2026-07-12-
-		# designsystem-stories-hosting-design.md (addendum records the split). Ungated: little
-		# unit-testable logic lives in this repo directly — Asgard's components are already gated
-		# in their own repo. Revisit if that changes.
+		# designsystem-stories-hosting-design.md (addendum records the split).
 		#
 		# Unlike Naglfar, Bragi ships plain NuGet only (no npm dual-publish) — it gets the
 		# canonical 'release' group like any other single-target realm. It was carved out of
 		# Naglfar's Exceptions entry the same day 'release' was split out of 'nuget' and the
 		# omission rode along by copy-paste; without it scatter never overwrote whatever
 		# release.yml Bragi was left with post-split, and it went stale (2026-07-15).
+		#
+		# Gated as of 2026-08-08 — no longer an exception, falls through to the default
+		# (Gated=$true). Previously ungated on the theory that little unit-testable logic
+		# lives here directly; flipped to require the gate / build check like every other
+		# default realm.
 		Bragi       = @{
 			Groups = @('universal', 'sdk', 'dotnet', 'nuget', 'release', 'tests', 'ci', 'workflows', 'claude')
-			Gated  = $false
 		}
 		# Docs and proofs of concept — git hygiene only. Ungated.
 		Glitnir     = @{
