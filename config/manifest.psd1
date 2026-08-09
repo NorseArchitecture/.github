@@ -13,42 +13,44 @@
 			'.gitattributes'
 			'.gitignore'
 		)
-		# Full .NET platform baseline
+		# Full .NET platform baseline. {Realm}.sln.DotSettings is the team-shared ReSharper
+		# layer: the "Norse Cleanup" profile (usings tasks OFF — R#'s resolver is degraded
+		# on .NET 11 preview and strips live usings; IDE0005-as-error owns using hygiene
+		# instead) plus silent-cleanup default. The {Realm} token in the filename is
+		# replaced with the repo name at scatter time (R# requires
+		# {SolutionName}.sln.DotSettings, and every realm's solution is named for the
+		# repo). Proven in Asgard's trial by fire 2026-08-07 alongside the .editorconfig
+		# ReSharper block. Rides here (2026-08-08, moved out of 'dotnet') rather than its
+		# own group — every current 'universal' member already has a .sln/.slnx and is a
+		# sensible R# target; Glitnir/Vafthrudnir aren't in 'universal' at all, so they
+		# were never at risk of receiving it either way.
 		universal   = @(
 			'.editorconfig'
 			'.gitattributes'
 			'.gitignore'
 			'LICENSE'
 			'nuget.config'
+			'{Realm}.sln.DotSettings'
 		)
 		# Shared SDK pin — separate from 'universal' so a realm can own its
 		# own global.json (e.g. Bifrost layers a local msbuild-sdks entry)
 		sdk         = @(
 			'global.json'
 		)
-		# Root MSBuild props — repos with a .NET build but not shipping to NuGet
-		# {Realm}.sln.DotSettings is the team-shared ReSharper layer: the "Norse Cleanup"
-		# profile (usings tasks OFF — R#'s resolver is degraded on .NET 11 preview and
-		# strips live usings; IDE0005-as-error owns using hygiene instead) plus silent-
-		# cleanup default. The {Realm} token in the filename is replaced with the repo
-		# name at scatter time (R# requires {SolutionName}.sln.DotSettings, and every
-		# realm's solution is named for the repo). Proven in Asgard's trial by fire
-		# 2026-08-07 alongside the .editorconfig ReSharper block.
-		dotnet      = @(
-			'Directory.Build.props'
-			'{Realm}.sln.DotSettings'
-		)
-		# Realm-root targets (first minted 2026-08-03; split out of 'dotnet' into its own
-		# group 2026-08-08): targets-time law — the SDK-implicit-using removal and the
-		# analyzer delivery Choose, which MUST evaluate after Directory.Packages.props so
-		# CPM's property is visible (props-level delivery misfires NU1008 under CPM, proven
-		# live). Split so a realm can keep receiving Directory.Build.props/
-		# {Realm}.sln.DotSettings normally while opting out of just this one file —
-		# Svartálfheim and Naglfar are the first cases: both are permanent architectural
-		# leaves (never declare a NorseRef/NorseDesignRef/NorseGeneratorRef, by design, not
-		# by current absence) for whom this file's NorseRef-oriented machinery can never
-		# fire. the-runes.md ch. 2/7.
+		# Root MSBuild props+targets — merged 2026-08-08 (the former separate 'dotnet'
+		# group shrank to just Directory.Build.props once {Realm}.sln.DotSettings moved to
+		# 'universal', so two single-purpose groups added ceremony without adding
+		# precision). Targets-time law — the SDK-implicit-using removal and the analyzer
+		# delivery Choose — MUST evaluate after Directory.Packages.props so CPM's property
+		# is visible (props-level delivery misfires NU1008 under CPM, proven live). One
+		# group so a realm opts out of both files together, or neither. Svartálfheim and
+		# Naglfar are the only current exceptions: permanent architectural leaves (never
+		# declare a NorseRef/NorseDesignRef/NorseGeneratorRef, by design, not by current
+		# absence) — both hand-own a lean Directory.Build.props; Svartálfheim also
+		# hand-owns a lean Directory.Build.targets, Naglfar has none at all. the-runes.md
+		# ch. 2/7.
 		msbuild     = @(
+			'Directory.Build.props'
 			'Directory.Build.targets'
 		)
 		# NuGet packaging props — repos that ship NuGet packages. tests/Directory.Build.targets
@@ -112,7 +114,7 @@
 		)
 	}
 	# Default group set for any repo not named in Exceptions below.
-	DefaultGroups   = @('universal', 'sdk', 'dotnet', 'msbuild', 'nuget', 'release', 'tests', 'ci', 'workflows', 'claude')
+	DefaultGroups   = @('universal', 'sdk', 'msbuild', 'nuget', 'release', 'tests', 'ci', 'workflows', 'claude')
 	# Repos scatter must never sync into. '.github' is the source of the config, not a
 	# consumer. 'EFCore.NamingConventions' is a fork of a third-party library
 	# (github.com/efcore/EFCore.NamingConventions, tracked as 'upstream') — not a platform
@@ -133,7 +135,7 @@
 		# permanent exception. See
 		# ../Bifrost/Glitnir/docs/Platform/specs/2026-07-01-norseref-generator-forwarding-design.md)
 		Yggdrasil   = @{
-			Groups = @('universal', 'sdk', 'dotnet', 'tests', 'ci', 'workflows', 'claude')
+			Groups = @('universal', 'sdk', 'msbuild', 'tests', 'ci', 'workflows', 'claude')
 		}
 		# Aspire composition root — universal only; owns its own global.json
 		# (local msbuild-sdks entry for Microsoft.Build.NoTargets, used by Glitnir's
@@ -156,7 +158,7 @@
 		# Architecture.Analyzers Choose was actively double-delivering the package alongside
 		# this realm's own manifest ProjectReference. the-runes.md ch. 2/7.
 		Svartalfheim = @{
-			Groups = @('universal', 'sdk', 'dotnet', 'nuget', 'release', 'tests', 'ci', 'workflows', 'claude')
+			Groups = @('universal', 'sdk', 'nuget', 'release', 'tests', 'ci', 'workflows', 'claude')
 		}
 		# Design system — token pipeline (JS/Style Dictionary) plus DesignSystem.Tokens, a single
 		# 100%-generated .NET package (FluentTokenSeed.g.cs + norse-design-tokens.css) packed
@@ -174,7 +176,7 @@
 		# generated C# file has no hand-authored surface for any analyzer to ever police,
 		# so even the lean self-check has nothing to attach to. the-runes.md ch. 2/7.
 		Naglfar     = @{
-			Groups = @('universal', 'sdk', 'dotnet', 'nuget', 'tests', 'ci', 'workflows', 'claude')
+			Groups = @('universal', 'sdk', 'nuget', 'tests', 'ci', 'workflows', 'claude')
 			Gated  = $false
 		}
 		# Design system — story content only: DesignSystem.Stories, a content-only Razor Class
@@ -193,7 +195,7 @@
 		# lives here directly; flipped to require the gate / build check like every other
 		# default realm.
 		Bragi       = @{
-			Groups = @('universal', 'sdk', 'dotnet', 'nuget', 'release', 'tests', 'ci', 'workflows', 'claude')
+			Groups = @('universal', 'sdk', 'msbuild', 'nuget', 'release', 'tests', 'ci', 'workflows', 'claude')
 		}
 		# Docs and proofs of concept — git hygiene only. Ungated.
 		Glitnir     = @{
