@@ -56,6 +56,26 @@ Your services live under your own root — `{Company}.{Context}.*` — and the p
 
 **The proof is Billing.** Picture three companies on the substrate — an insurance MGA, an energy retailer, a logistics operation — each with a context named Billing. Insurance Billing accretes earned premium day after day on risk. Energy Billing coordinates four distinct utility-billing models. Logistics Billing invoices orders flowing in from across the globe. Same name, three completely different animals, **zero shared code** between them — and the platform hosts all three identically. That gap isn't a limitation. That gap *is* the design.
 
+## The runtime is the composition root
+
+If you read one section here before browsing the code, read this one. It is the part that requires unlearning, and until it clicks, several deliberate choices below will look like sloppiness.
+
+The received wisdom — pin everything, publish only when source changes — is well-earned. It was written against real pain: irreproducible builds, transitive surprises, the 3 a.m. deploy that resolved differently than the one that passed. None of that is wrong. It is aimed one level too low.
+
+Most .NET platforms apply inversion of control at the class level and stop there. Here it runs all the way up: **the deployed runtime composes the platform, and nothing beneath it is permitted to make that call.** The same substitution shows up at three levels, and it is deliberately the same idea each time.
+
+- **A component declares `IReferenceService`.** The host decides whether that resolves to gRPC, in-process, or a fake. The component never learns which.
+- **A project declares `NorseRef`.** The crossing decides whether that resolves to a project reference or a published package — same source, two resolution strategies, selected by composition context. Inversion of control applied to the build graph itself.
+- **A library declares `Version="*"`.** The composition root decides which version it gets.
+
+That last one is the unlearning. It reads as negligence; it is the opposite. A library that pins its dependencies has quietly made a deployment decision on behalf of someone holding strictly more information — and it has done it in the one place that cannot be overridden without a fork. Declaring a need and resolving a need are different jobs, and a realm only has standing to do the first. The pin doesn't disappear here; it moves to the only participant that can see the whole closure.
+
+**This is a trade, not a freebie.** Floating only moves risk somewhere useful if the composition root genuinely owns the closure — so it has to actually pin (Central Package Management at the root), actually exercise both crossings, and actually test the composed result end to end rather than testing each realm in isolation and hoping. Float your libraries without building that root and "works on the machine that packed it" becomes your only integration test. The discipline is the price of the flexibility; skip it and you have merely deferred the pinning to nobody.
+
+**One consequence worth knowing up front:** because realm libraries never pin, a published package's dependency *floor* is the only version signal it emits — and that floor is fixed at pack time. So a realm gets republished when its dependencies move, even when not one line of its own source changed. The version is not describing the code. It is describing the closure.
+
+And this is why [Bifröst](https://github.com/NorseArchitecture/Bifrost) is a reference composition rather than a product. Fork it, take the realms you need as submodules, write your own AppHost, swap the containers for whatever direction your platform is going. Composition decisions belong to the runtime, so the bridge is precisely the part you are expected to own.
+
 ## Opinions, enforced
 
 Norse Architecture is built around the **pit of success**: the easy path and the correct path are the same path, and the wrong path doesn't compile.
