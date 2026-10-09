@@ -32,6 +32,12 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           dotnet-quality: ${{ env.DOTNET_QUALITY }}
 
+      # The solution says which workloads it needs (wasm-tools for a Blazor WebAssembly head that
+      # statically links a native library; android/ios/maccatalyst for a MAUI head). A realm that needs
+      # none restores nothing. Never a per-realm input: the projects are the source of truth.
+      - name: Restore .NET workloads
+        run: dotnet workload restore
+
       - name: Write coverage settings
         run: |
           cat > coverage-settings.xml <<'EOF'
