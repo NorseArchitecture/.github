@@ -34,6 +34,12 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           dotnet-quality: ${{ env.DOTNET_QUALITY }}
 
+      # Same step as ci-build-test.yml: the solution says which workloads its build needs (wasm-tools for a
+      # natively linked Blazor WebAssembly head); a realm that needs none restores nothing.
+      - name: Restore .NET workloads
+        if: inputs.language == 'csharp'
+        run: dotnet workload restore
+
       - name: Setup Node
         if: inputs.language == 'javascript-typescript'
         uses: actions/setup-node@v7
