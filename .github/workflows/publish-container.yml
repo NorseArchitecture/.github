@@ -52,11 +52,11 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           dotnet-quality: ${{ env.DOTNET_QUALITY }}
 
-      # Same step as ci-build-test.yml: the published projects say which workloads they need (wasm-tools
-      # for a host that carries a natively linked Blazor WebAssembly client); a realm that needs none
-      # restores nothing.
+      # Scoped to the image's own project graph: only a host that carries a natively linked Blazor
+      # WebAssembly client pulls wasm-tools; the other images restore nothing. Unscoped, the restore
+      # scans the whole solution and every image pays for the WebAssembly toolchain.
       - name: Restore .NET workloads
-        run: dotnet workload restore
+        run: dotnet workload restore ${{ matrix.project }}
 
       - name: Log in to GHCR
         uses: docker/login-action@v4
