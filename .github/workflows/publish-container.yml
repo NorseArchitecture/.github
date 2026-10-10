@@ -38,7 +38,7 @@ jobs:
             project: src/Hosting.Worker/Hosting.Worker.csproj
             repository: norsearchitecture/hosting/worker
           - name: stories
-            project: src/Hosting.Stories.Server/Hosting.Stories.Server.csproj
+            project: src/Hosting.Stories/Hosting.Stories.csproj
             repository: norsearchitecture/hosting/stories
     env:
       NUGET_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
