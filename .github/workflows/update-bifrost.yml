@@ -6,6 +6,9 @@ on:
       bifrost_token:
         required: true
 
+# The job authenticates with bifrost_token, never GITHUB_TOKEN.
+permissions: {}
+
 jobs:
   update:
     runs-on: ubuntu-latest

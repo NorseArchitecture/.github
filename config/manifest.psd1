@@ -91,7 +91,9 @@
 		)
 		# CI workflows — all realms including Bifrost
 		ci          = @(
+			'.github/codeql/codeql-config.yml'
 			'.github/workflows/auto-approve.yml'
+			'.github/workflows/codeql.yml'
 		)
 		# The canonical single-target (NuGet-only) release workflow — split out of 'nuget' above
 		# 2026-07-12 so a realm can keep every other NuGet-packaging file scattered normally while

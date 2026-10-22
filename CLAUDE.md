@@ -8,7 +8,7 @@ This repository is **Ginnungagap** — the primordial void from which all realms
 
 ## Commands
 
-There is no build/lint/test pipeline *for this repo's own content* — no `.editorconfig` at the root, no C# to compile. Most files under `.github/workflows/` are `workflow_call`-only definitions consumed by other realms; the one exception is `scatter-the-runes.yml`, which does trigger on pushes to `config/**` here (see Config scatter below). Operational commands:
+There is no build/lint/test pipeline *for this repo's own content* — no `.editorconfig` at the root, no C# to compile. Most files under `.github/workflows/` are `workflow_call`-only definitions consumed by other realms; the exceptions are `scatter-the-runes.yml`, which triggers on pushes to `config/**` here (see Config scatter below), and `codeql.yml`, which also scans this repo weekly (`schedule` + `workflow_dispatch`) — it is both the reusable CodeQL workflow and this repo's own caller, since `.github` is a `ScatterExcludes` entry. GitHub's CodeQL default setup stays off org-wide (it scans PRs and can't exclude paths); realms get a scattered `codeql.yml` caller (weekly) and `.github/codeql/codeql-config.yml` (skips tests and vendored libs) through the `ci` group, plus the tag-time gate in `release.yml`. Operational commands:
 
 ### Org secrets
 

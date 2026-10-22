@@ -1,5 +1,12 @@
 name: CodeQL
 
+# CodeQL runs through this one workflow, never GitHub's default setup (default setup scans every
+# PR and cannot exclude paths). Two entry points:
+#   - workflow_call from a realm's release.yml: the tag-time publish gate.
+#   - schedule / workflow_dispatch: the weekly baseline. Each scattered realm carries a thin
+#     .github/workflows/codeql.yml caller; this repo (not a scatter target) runs it directly.
+# Tests and vendored libs are skipped by the scattered .github/codeql/codeql-config.yml.
+#
 # Setup steps (checkout, .NET/Node, restore) are intentionally inline.
 # Composite actions cannot be called from within a reusable workflow — the runner
 # checks out the CALLER's repository, so any ./ path resolves there, not here.
@@ -8,27 +15,69 @@ on:
   workflow_call:
     inputs:
       language:
-        description: 'CodeQL language to analyze (csharp, javascript-typescript)'
+        description: 'CodeQL language to analyze (actions, csharp, javascript-typescript); empty detects from the repository'
         type: string
-        required: true
+        required: false
+        default: ''
+      config-file:
+        description: 'CodeQL config path in the caller checkout; empty uses the scattered .github/codeql/codeql-config.yml'
+        type: string
+        required: false
+        default: ''
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
 
 permissions:
-  security-events: write
   contents: read
+  security-events: write
 
 env:
   DOTNET_VERSION: "11.0.x"
   DOTNET_QUALITY: "preview"
+  # This repo is the config's source, so its copy sits under config/ rather than at the scattered path.
+  CODEQL_CONFIG: ${{ inputs.config-file || (github.repository == 'NorseArchitecture/.github' && './config/.github/codeql/codeql-config.yml' || './.github/codeql/codeql-config.yml') }}
 
 jobs:
-  analyze:
+  detect:
     runs-on: ubuntu-latest
+    outputs:
+      languages: ${{ steps.detect.outputs.languages }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Detect languages
+        id: detect
+        env:
+          LANGUAGE: ${{ inputs.language }}
+        run: |
+          if [ -n "$LANGUAGE" ]; then
+            languages=$(jq -cn --arg l "$LANGUAGE" '[$l]')
+          else
+            languages='[]'
+            add() { languages=$(jq -c --arg l "$1" '. + [$l]' <<<"$languages"); }
+            [ -n "$(git ls-files '.github/workflows/*.yml' '.github/workflows/*.yaml')" ] && add actions
+            # The build step runs at the repo root, so csharp needs a root solution (this repo's csproj files are fixtures).
+            [ -n "$(git ls-files '*.csproj')" ] && [ -n "$(git ls-files '*.sln' '*.slnx' ':!:*/*')" ] && add csharp
+            [ -n "$(git ls-files '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' ':!:**/node_modules/**' ':!:**/wwwroot/lib/**' ':!:**/tests/**')" ] && add javascript-typescript
+          fi
+          echo "languages=$languages" >> "$GITHUB_OUTPUT"
+
+  analyze:
+    needs: detect
+    if: needs.detect.outputs.languages != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ${{ fromJSON(needs.detect.outputs.languages) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
       - name: Setup .NET
-        if: inputs.language == 'csharp'
+        if: matrix.language == 'csharp'
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
@@ -37,11 +86,11 @@ jobs:
       # Same step as ci-build-test.yml: the solution says which workloads its build needs (wasm-tools for a
       # natively linked Blazor WebAssembly head); a realm that needs none restores nothing.
       - name: Restore .NET workloads
-        if: inputs.language == 'csharp'
+        if: matrix.language == 'csharp'
         run: dotnet workload restore
 
       - name: Setup Node
-        if: inputs.language == 'javascript-typescript'
+        if: matrix.language == 'javascript-typescript' && hashFiles('package-lock.json') != ''
         uses: actions/setup-node@v7
         with:
           node-version: '24'
@@ -49,10 +98,12 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
-          languages: ${{ inputs.language }}
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.language == 'csharp' && 'manual' || 'none' }}
+          config-file: ${{ env.CODEQL_CONFIG }}
 
       - name: Restore and build (csharp)
-        if: inputs.language == 'csharp'
+        if: matrix.language == 'csharp'
         env:
           NUGET_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
         run: |
@@ -60,8 +111,10 @@ jobs:
           dotnet build -c Release
 
       - name: Install dependencies (javascript-typescript)
-        if: inputs.language == 'javascript-typescript'
+        if: matrix.language == 'javascript-typescript' && hashFiles('package-lock.json') != ''
         run: npm ci
 
       - name: Analyze
         uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}

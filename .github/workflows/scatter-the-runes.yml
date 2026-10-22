@@ -7,6 +7,9 @@ on:
       - 'config/**'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   scatter:
     runs-on: ubuntu-latest

@@ -66,13 +66,13 @@ The `schema` scatter group (`config/schema/Directory.Build.props` + `.targets`) 
 
 ## Reusable workflows
 
-A tag push (`v*.*.*`) is the sole release inception point. Each realm's own `release.yml` runs `build-test` + one `codeql` call per language it has, gates one or more `publish-*` jobs on those, then fans in to a single `create-release` job — so a realm shipping to more than one target (e.g. Naglfar's npm + NuGet) never races two jobs both trying to create the same GitHub Release. `publish-*` workflows are publish-only: they pack/push/scan and upload their output as an artifact bundle named `<target>-artifacts`; `create-release.yml` downloads every bundle matching that pattern and creates the release in one shot, whatever the bundle count.
+A tag push (`v*.*.*`) is the sole release inception point. Each realm's own `release.yml` runs `build-test` + one `codeql` call (per language, for realms that name one), gates one or more `publish-*` jobs on those, then fans in to a single `create-release` job — so a realm shipping to more than one target (e.g. Naglfar's npm + NuGet) never races two jobs both trying to create the same GitHub Release. `publish-*` workflows are publish-only: they pack/push/scan and upload their output as an artifact bundle named `<target>-artifacts`; `create-release.yml` downloads every bundle matching that pattern and creates the release in one shot, whatever the bundle count.
 
 | Workflow | Purpose |
 |----------|---------|
 | [`ci-build-test.yml`](.github/workflows/ci-build-test.yml) | Restore → build → test → Cobertura coverage → PR comment → enforce branch-coverage threshold |
 | [`ci-build-test-npm.yml`](.github/workflows/ci-build-test-npm.yml) | Checkout → Node setup → install → build → test — the npm-realm equivalent of `ci-build-test.yml` |
-| [`codeql.yml`](.github/workflows/codeql.yml) | Language-parameterized CodeQL scan (`csharp` or `javascript-typescript`); a realm calls it once per language it actually has |
+| [`codeql.yml`](.github/workflows/codeql.yml) | The platform's only CodeQL entry point — GitHub's default setup is off everywhere (it scans every PR and can't exclude paths). Detects `actions`/`csharp`/`javascript-typescript` from the repo unless `language` is passed, and reads the scattered `.github/codeql/codeql-config.yml` (tests and vendored libs skipped). Runs weekly via each realm's scattered `codeql.yml` caller (also `workflow_dispatch`), on this repo directly, and as the tag-time gate from `release.yml` |
 | [`publish-nuget.yml`](.github/workflows/publish-nuget.yml) | Packs, generates an SBOM, pushes to GitHub Packages, uploads `nuget-artifacts` — publish-only, no release creation |
 | [`publish-npm.yml`](.github/workflows/publish-npm.yml) | Packs, generates an SBOM, publishes to GitHub Packages, uploads `npm-artifacts` — publish-only, no release creation |
 | [`publish-container.yml`](.github/workflows/publish-container.yml) | Builds, Trivy-scans, and pushes all four Yggdrasil images to GHCR in parallel (matrix), uploads `container-<name>-artifacts` — publish-only, no release creation |
