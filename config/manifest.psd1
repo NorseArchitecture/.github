@@ -91,8 +91,12 @@
 		)
 		# CI workflows — all realms including Bifrost
 		ci          = @(
-			'.github/codeql/codeql-config.yml'
 			'.github/workflows/auto-approve.yml'
+		)
+		# CodeQL weekly caller + shared config — every realm except Glitnir, the design court's
+		# home of proofs of concept and the record: it never burns CPU on CodeQL (or Dependabot).
+		codeql      = @(
+			'.github/codeql/codeql-config.yml'
 			'.github/workflows/codeql.yml'
 		)
 		# The canonical single-target (NuGet-only) release workflow — split out of 'nuget' above
@@ -116,7 +120,7 @@
 		)
 	}
 	# Default group set for any repo not named in Exceptions below.
-	DefaultGroups   = @('universal', 'sdk', 'msbuild', 'nuget', 'release', 'tests', 'ci', 'workflows', 'claude')
+	DefaultGroups   = @('universal', 'sdk', 'msbuild', 'nuget', 'release', 'tests', 'ci', 'codeql', 'workflows', 'claude')
 	# Repos scatter must never sync into. '.github' is the source of the config, not a
 	# consumer. 'EFCore.NamingConventions' is a fork of a third-party library
 	# (github.com/efcore/EFCore.NamingConventions, tracked as 'upstream') — not a platform
@@ -137,7 +141,7 @@
 		# permanent exception. See
 		# ../Bifrost/Glitnir/docs/Platform/specs/2026-07-01-norseref-generator-forwarding-design.md)
 		Yggdrasil   = @{
-			Groups = @('universal', 'sdk', 'msbuild', 'tests', 'ci', 'workflows', 'claude')
+			Groups = @('universal', 'sdk', 'msbuild', 'tests', 'ci', 'codeql', 'workflows', 'claude')
 		}
 		# Aspire composition root — universal only; owns its own global.json
 		# (local msbuild-sdks entry for Microsoft.Build.NoTargets, used by Glitnir's
@@ -146,7 +150,7 @@
 		# Bifrost is the valid session root and hand-owns its own permissions+deny
 		# .claude/settings.json, not the submodule guard hook.
 		Bifrost     = @{
-			Groups = @('universal', 'ci')
+			Groups = @('universal', 'ci', 'codeql')
 			Gated  = $false
 		}
 		# The forge — Norse.Primitives, the platform's dependency-graph root. Permanent
@@ -160,7 +164,7 @@
 		# Architecture.Analyzers Choose was actively double-delivering the package alongside
 		# this realm's own manifest ProjectReference. the-runes.md ch. 2/7.
 		Svartalfheim = @{
-			Groups = @('universal', 'sdk', 'nuget', 'release', 'tests', 'ci', 'workflows', 'claude')
+			Groups = @('universal', 'sdk', 'nuget', 'release', 'tests', 'ci', 'codeql', 'workflows', 'claude')
 		}
 		# Design system — token pipeline (JS/Style Dictionary) plus DesignSystem.Tokens, a single
 		# 100%-generated .NET package (FluentTokenSeed.g.cs + norse-design-tokens.css) packed
@@ -178,7 +182,7 @@
 		# generated C# file has no hand-authored surface for any analyzer to ever police,
 		# so even the lean self-check has nothing to attach to. the-runes.md ch. 2/7.
 		Naglfar     = @{
-			Groups = @('universal', 'sdk', 'nuget', 'tests', 'ci', 'workflows', 'claude')
+			Groups = @('universal', 'sdk', 'nuget', 'tests', 'ci', 'codeql', 'workflows', 'claude')
 			Gated  = $false
 		}
 		# Design system — story content only: DesignSystem.Stories, a content-only Razor Class
@@ -197,9 +201,10 @@
 		# lives here directly; flipped to require the gate / build check like every other
 		# default realm.
 		Bragi       = @{
-			Groups = @('universal', 'sdk', 'msbuild', 'nuget', 'release', 'tests', 'ci', 'workflows', 'claude')
+			Groups = @('universal', 'sdk', 'msbuild', 'nuget', 'release', 'tests', 'ci', 'codeql', 'workflows', 'claude')
 		}
-		# Docs and proofs of concept — git hygiene only. Ungated.
+		# Docs and proofs of concept — git hygiene only. Ungated. No 'codeql' group, ever: this is
+		# the akashic record, not shipped code. Dependabot is switched off here too (repo settings).
 		Glitnir     = @{
 			Groups = @('git', 'ci', 'workflows', 'claude')
 			Gated  = $false
@@ -210,7 +215,7 @@
 		# so a merge to master flows through the same submodule-bump path as every other realm.
 		# Revisit once Bruno's gRPC support and an integration server both land.
 		Vafthrudnir = @{
-			Groups = @('git', 'ci', 'workflows', 'claude')
+			Groups = @('git', 'ci', 'codeql', 'workflows', 'claude')
 			Gated  = $false
 		}
 		# Source of the canonical config — scatter excludes it outright (see
