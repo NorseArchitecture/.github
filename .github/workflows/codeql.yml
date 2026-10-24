@@ -5,7 +5,11 @@ name: CodeQL
 #   - workflow_call from a realm's release.yml: the tag-time publish gate.
 #   - schedule / workflow_dispatch: the weekly baseline. Each scattered realm carries a thin
 #     .github/workflows/codeql.yml caller; this repo (not a scatter target) runs it directly.
-# Tests and vendored libs are skipped by the scattered .github/codeql/codeql-config.yml.
+# C# runs as a traced (manual) build of the src/ and gen/ projects only, so source-generator output is
+# extracted as the compiler sees it and test projects are never compiled, hence never scanned. paths-ignore
+# does not apply to a traced build; leaving tests out of the build is the filter. MinVer is skipped: it
+# only stamps versions, and its git probe fails under the tracer. The scattered
+# .github/codeql/codeql-config.yml still skips tests and vendored libs for the interpreted languages.
 #
 # Setup steps (checkout, .NET/Node, restore) are intentionally inline.
 # Composite actions cannot be called from within a reusable workflow — the runner
@@ -91,12 +95,25 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          # Buildless everywhere (what default setup does): a traced C# build extracts every compiled file and
-          # the paths-ignore in the shared config would not take effect. Buildless restores packages itself.
-          build-mode: none
+          build-mode: ${{ matrix.language == 'csharp' && 'manual' || 'none' }}
           config-file: ${{ env.CODEQL_CONFIG }}
+
+      # The solution says which workloads its build needs (same step as ci-build-test.yml); a realm that
+      # needs none restores nothing.
+      - name: Restore .NET workloads
+        if: matrix.language == 'csharp'
+        run: dotnet workload restore
+
+      # Every project under src/ and gen/ (tests, benchmarks and tools are not built). Shared compilation
+      # is off so every csc invocation runs under the tracer.
+      - name: Build (csharp)
+        if: matrix.language == 'csharp'
         env:
           NUGET_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
+        run: |
+          git ls-files 'src/*.csproj' 'gen/*.csproj' | while read -r project; do
+            dotnet build "$project" -p:UseSharedCompilation=false -p:MinVerSkip=true
+          done
 
       - name: Install dependencies (javascript-typescript)
         if: matrix.language == 'javascript-typescript' && hashFiles('package-lock.json') != ''
