@@ -33,9 +33,8 @@ permissions:
   security-events: write
 
 env:
-  DOTNET_VERSION: "11.0.x"
-  DOTNET_QUALITY: "preview"
-  # This repo is the config's source, so its copy sits under config/ rather than at the scattered path.
+  # This repo is the config's source, so its copies sit under config/ rather than at the scattered paths.
+  GLOBAL_JSON: ${{ github.repository == 'NorseArchitecture/.github' && './config/global.json' || './global.json' }}
   CODEQL_CONFIG: ${{ inputs.config-file || (github.repository == 'NorseArchitecture/.github' && './config/.github/codeql/codeql-config.yml' || './.github/codeql/codeql-config.yml') }}
 
 jobs:
@@ -58,7 +57,7 @@ jobs:
             languages='[]'
             add() { languages=$(jq -c --arg l "$1" '. + [$l]' <<<"$languages"); }
             [ -n "$(git ls-files '.github/workflows/*.yml' '.github/workflows/*.yaml')" ] && add actions
-            # The build step runs at the repo root, so csharp needs a root solution (this repo's csproj files are fixtures).
+            # csharp needs a root solution (this repo's csproj files are test fixtures, not code to scan).
             [ -n "$(git ls-files '*.csproj')" ] && [ -n "$(git ls-files '*.sln' '*.slnx' ':!:*/*')" ] && add csharp
             [ -n "$(git ls-files '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' ':!:**/node_modules/**' ':!:**/wwwroot/lib/**' ':!:**/tests/**')" ] && add javascript-typescript
           fi
@@ -80,14 +79,7 @@ jobs:
         if: matrix.language == 'csharp'
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-          dotnet-quality: ${{ env.DOTNET_QUALITY }}
-
-      # Same step as ci-build-test.yml: the solution says which workloads its build needs (wasm-tools for a
-      # natively linked Blazor WebAssembly head); a realm that needs none restores nothing.
-      - name: Restore .NET workloads
-        if: matrix.language == 'csharp'
-        run: dotnet workload restore
+          global-json-file: ${{ env.GLOBAL_JSON }}
 
       - name: Setup Node
         if: matrix.language == 'javascript-typescript' && hashFiles('package-lock.json') != ''
@@ -99,16 +91,12 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          build-mode: ${{ matrix.language == 'csharp' && 'manual' || 'none' }}
+          # Buildless everywhere (what default setup does): a traced C# build extracts every compiled file and
+          # the paths-ignore in the shared config would not take effect. Buildless restores packages itself.
+          build-mode: none
           config-file: ${{ env.CODEQL_CONFIG }}
-
-      - name: Restore and build (csharp)
-        if: matrix.language == 'csharp'
         env:
           NUGET_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
-        run: |
-          dotnet restore
-          dotnet build -c Release
 
       - name: Install dependencies (javascript-typescript)
         if: matrix.language == 'javascript-typescript' && hashFiles('package-lock.json') != ''
