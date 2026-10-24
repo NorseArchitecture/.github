@@ -1,0 +1,23 @@
+version: 2
+
+# Ginnungagap is ScatterExcludes, so it hand-owns this file (the canonical realm copy is
+# config/.github/dependabot.yml). Same shape: one monthly pull request for the third-party
+# actions pinned here — both this repo's own workflows and the scattered templates under
+# config/.github/workflows, which Dependabot reaches through the second directory.
+multi-ecosystem-groups:
+  dependencies:
+    schedule:
+      interval: monthly
+
+updates:
+  - package-ecosystem: github-actions
+    directories:
+      - "/"
+      - "/config"
+    patterns: ["*"]
+    multi-ecosystem-group: dependencies
+    cooldown:
+      default-days: 7
+    ignore:
+      # Reusable workflows reference each other at master, deliberately unpinned.
+      - dependency-name: NorseArchitecture/.github

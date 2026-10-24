@@ -111,6 +111,14 @@
 		workflows   = @(
 			'.github/workflows/update-bifrost.yml'
 		)
+		# Dependabot version updates — every realm except Glitnir (never runs CodeQL or
+		# Dependabot) and Naglfar, which hand-owns a copy that adds an npm entry for its token
+		# pipeline (the same bespoke-file ruling as its release.yml). GitHub Actions only: third-
+		# party packages float, Norse.* moves via sound-gjallarhorn, the SDK via global.json —
+		# see the file's own header. Added 2026-10-23.
+		dependabot  = @(
+			'.github/dependabot.yml'
+		)
 		# Claude Code submodule guard — every realm except Bifrost (the valid session
 		# root, which owns its own permissions+deny .claude/settings.json by hand) and
 		# .github (source, already covered by ScatterExcludes). Blocks a session started
@@ -120,7 +128,7 @@
 		)
 	}
 	# Default group set for any repo not named in Exceptions below.
-	DefaultGroups   = @('universal', 'sdk', 'msbuild', 'nuget', 'release', 'tests', 'ci', 'codeql', 'workflows', 'claude')
+	DefaultGroups   = @('universal', 'sdk', 'msbuild', 'nuget', 'release', 'tests', 'ci', 'codeql', 'dependabot', 'workflows', 'claude')
 	# Repos scatter must never sync into. '.github' is the source of the config, not a
 	# consumer. 'EFCore.NamingConventions' is a fork of a third-party library
 	# (github.com/efcore/EFCore.NamingConventions, tracked as 'upstream') — not a platform
@@ -141,7 +149,7 @@
 		# permanent exception. See
 		# ../Bifrost/Glitnir/docs/Platform/specs/2026-07-01-norseref-generator-forwarding-design.md)
 		Yggdrasil   = @{
-			Groups = @('universal', 'sdk', 'msbuild', 'tests', 'ci', 'codeql', 'workflows', 'claude')
+			Groups = @('universal', 'sdk', 'msbuild', 'tests', 'ci', 'codeql', 'dependabot', 'workflows', 'claude')
 		}
 		# Aspire composition root — universal only; owns its own global.json
 		# (local msbuild-sdks entry for Microsoft.Build.NoTargets, used by Glitnir's
@@ -150,7 +158,7 @@
 		# Bifrost is the valid session root and hand-owns its own permissions+deny
 		# .claude/settings.json, not the submodule guard hook.
 		Bifrost     = @{
-			Groups = @('universal', 'ci', 'codeql')
+			Groups = @('universal', 'ci', 'codeql', 'dependabot')
 			Gated  = $false
 		}
 		# The forge — Norse.Primitives, the platform's dependency-graph root. Permanent
@@ -164,7 +172,7 @@
 		# Architecture.Analyzers Choose was actively double-delivering the package alongside
 		# this realm's own manifest ProjectReference. the-runes.md ch. 2/7.
 		Svartalfheim = @{
-			Groups = @('universal', 'sdk', 'nuget', 'release', 'tests', 'ci', 'codeql', 'workflows', 'claude')
+			Groups = @('universal', 'sdk', 'nuget', 'release', 'tests', 'ci', 'codeql', 'dependabot', 'workflows', 'claude')
 		}
 		# Design system — token pipeline (JS/Style Dictionary) plus DesignSystem.Tokens, a single
 		# 100%-generated .NET package (FluentTokenSeed.g.cs + norse-design-tokens.css) packed
@@ -174,6 +182,8 @@
 		# No 'release' group: Naglfar's release.yml dual-publishes npm and NuGet from one file
 		# (a version-sync gate plus two parallel publish jobs) — permanently bespoke, not the
 		# canonical single-target template every other 'nuget'-shipping realm scatters unmodified.
+		# No 'dependabot' group for the same reason: Naglfar hand-owns a .github/dependabot.yml
+		# that is the canonical file plus an npm entry for the token pipeline (2026-10-23).
 		# Ungated for now — real dotnet-test coverage exists as of 2026-07-12
 		# (tests/DesignSystem.Tokens.Tests), unlike when this was first written; revisit Gated.
 		# Also excluded from 'msbuild' (2026-08-08, same ruling as Svartálfheim above, a
@@ -201,7 +211,7 @@
 		# lives here directly; flipped to require the gate / build check like every other
 		# default realm.
 		Bragi       = @{
-			Groups = @('universal', 'sdk', 'msbuild', 'nuget', 'release', 'tests', 'ci', 'codeql', 'workflows', 'claude')
+			Groups = @('universal', 'sdk', 'msbuild', 'nuget', 'release', 'tests', 'ci', 'codeql', 'dependabot', 'workflows', 'claude')
 		}
 		# Docs and proofs of concept — git hygiene only. Ungated. No 'codeql' group, ever: this is
 		# the akashic record, not shipped code. Dependabot is switched off here too (repo settings).
@@ -215,7 +225,7 @@
 		# so a merge to master flows through the same submodule-bump path as every other realm.
 		# Revisit once Bruno's gRPC support and an integration server both land.
 		Vafthrudnir = @{
-			Groups = @('git', 'ci', 'codeql', 'workflows', 'claude')
+			Groups = @('git', 'ci', 'codeql', 'dependabot', 'workflows', 'claude')
 			Gated  = $false
 		}
 		# Source of the canonical config — scatter excludes it outright (see
