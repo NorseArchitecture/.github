@@ -94,7 +94,9 @@
 			'.github/workflows/auto-approve.yml'
 		)
 		# CodeQL weekly caller + shared config — every realm except Glitnir, the design court's
-		# home of proofs of concept and the record: it never burns CPU on CodeQL (or Dependabot).
+		# home of proofs of concept and the record: it never burns CPU on CodeQL (or Dependabot),
+		# and Bifrost, the developer meta-repo: its only C# is the AppHost, its slnx references
+		# submodule projects the traced build can't see, and every realm it composes scans itself.
 		codeql      = @(
 			'.github/codeql/codeql-config.yml'
 			'.github/workflows/codeql.yml'
@@ -156,9 +158,10 @@
 		# doc-glob project since Glitnir has no global.json of its own). Ungated —
 		# no gate / build CI check exists for an Aspire AppHost. No 'claude' group —
 		# Bifrost is the valid session root and hand-owns its own permissions+deny
-		# .claude/settings.json, not the submodule guard hook.
+		# .claude/settings.json, not the submodule guard hook. No 'codeql' group (2026-10-26) —
+		# see the group's comment above.
 		Bifrost     = @{
-			Groups = @('universal', 'ci', 'codeql', 'dependabot')
+			Groups = @('universal', 'ci', 'dependabot')
 			Gated  = $false
 		}
 		# The forge — Norse.Primitives, the platform's dependency-graph root. Permanent
