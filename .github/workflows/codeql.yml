@@ -86,10 +86,18 @@ jobs:
           global-json-file: ${{ env.GLOBAL_JSON }}
 
       - name: Setup Node
-        if: matrix.language == 'javascript-typescript' && hashFiles('package-lock.json') != ''
+        if: matrix.language == 'javascript-typescript' && hashFiles('bun.lock') != ''
         uses: actions/setup-node@v7
         with:
           node-version: '24'
+
+      # Both languages: the JS install below uses it, and a C# build can shell to it (Naglfar's token
+      # pipeline). A realm with no bun.lock skips this.
+      - name: Setup Bun
+        if: hashFiles('bun.lock') != ''
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -116,8 +124,8 @@ jobs:
           done
 
       - name: Install dependencies (javascript-typescript)
-        if: matrix.language == 'javascript-typescript' && hashFiles('package-lock.json') != ''
-        run: npm ci
+        if: matrix.language == 'javascript-typescript' && hashFiles('bun.lock') != ''
+        run: bun install --frozen-lockfile
 
       - name: Analyze
         uses: github/codeql-action/analyze@v4
